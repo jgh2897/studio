@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ISCAR Report Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:      #111418;
+  --surf:    #191d22;
+  --surf2:   #20252c;
+  --surf3:   #282e37;
+  --border:  #2e3540;
+  --border2: #3d4755;
+  --text:    #dce3ec;
+  --text2:   #8a97a8;
+  --text3:   #4f5d6e;
+  --amber:   #f0a020;   /* 가공 테스트 */
+  --teal:    #2ab8b0;   /* 고객사 협의 */
+  --rose:    #e04060;   /* 불량·클레임 */
+  --ok:      #28b870;
+  --ng:      #e04060;
+  --wip:     #f0a020;
+  --shadow:  0 2px 16px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;overflow:hidden}
+
+/* ── SHELL ── */
+.app{display:grid;grid-template-rows:54px 1fr;grid-template-columns:230px 1fr;height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{
+  grid-column:1/-1;
+  background:var(--surf);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 18px;gap:0;
+  position:relative;z-index:30;
+}
+.topbar::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--amber),var(--teal) 50%,var(--rose));
+}
+
+.brand{
+  font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;
+  letter-spacing:.1em;color:var(--text);margin-right:32px;
+  display:flex;align-items:center;gap:10px;
+}
+.brand-tag{
+  font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.15em;
+  color:var(--amber);border:1px solid var(--amber);padding:2px 6px;border-radius:2px;
+  opacity:.8;
+}
+
+.tab-row{display:flex;flex:1}
+.tab{
+  height:54px;padding:0 18px;display:flex;align-items:center;gap:8px;
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;
+  letter-spacing:.04em;color:var(--text3);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s;
+}
+.tab:hover{color:var(--text2)}
+.tab.on{color:var(--text);border-bottom-color:var(--amber)}
+.tab-n{
+  width:17px;height:17px;border-radius:50%;border:1.5px solid currentColor;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:8px;flex-shrink:0;
+}
+.tab.done .tab-n{background:var(--ok);border-color:var(--ok);color:#000}
+
+.topbar-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:var(--surf);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-head{padding:12px 10px 8px;border-bottom:1px solid var(--border)}
+.sb-search{
+  width:100%;background:var(--surf2);border:1px solid var(--border);
+  border-radius:5px;padding:7px 10px;font-size:11px;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .15s;
+}
+.sb-search:focus{border-color:var(--amber)}
+.sb-search::placeholder{color:var(--text3)}
+.filter-row{display:flex;gap:3px;margin-top:7px}
+.fchip{
+  padding:3px 8px;border-radius:3px;font-size:9px;
+  font-family:'JetBrains Mono',monospace;cursor:pointer;
+  border:1px solid var(--border);color:var(--text3);transition:all .15s;
+}
+.fchip:hover{color:var(--text2)}
+.fchip.fa{background:var(--surf3);border-color:var(--border2);color:var(--text)}
+.fchip.fm{border-color:var(--amber);color:var(--amber);background:rgba(240,160,32,.1)}
+.fchip.fc{border-color:var(--teal);color:var(--teal);background:rgba(42,184,176,.1)}
+.fchip.fr{border-color:var(--rose);color:var(--rose);background:rgba(224,64,96,.1)}
+
+.doc-list{flex:1;overflow-y:auto;padding:5px}
+.doc-list::-webkit-scrollbar{width:3px}
+.doc-list::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.ditem{
+  padding:9px 9px 9px 13px;border-radius:5px;cursor:pointer;
+  border:1px solid transparent;margin-bottom:2px;transition:all .15s;position:relative;
+}
+.ditem:hover{background:var(--surf2)}
+.ditem.on{background:var(--surf3);border-color:var(--border2)}
+.ditem-bar{position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:2px}
+.ditem-ttl{font-size:12px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ditem-meta{display:flex;gap:5px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)}
+
+.sticker{padding:2px 6px;border-radius:2px;font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700}
+.s-ok{background:rgba(40,184,112,.2);color:var(--ok)}
+.s-ng{background:rgba(224,64,96,.2);color:var(--ng)}
+.s-wip{background:rgba(240,160,32,.2);color:var(--wip)}
+
+.sb-foot{padding:8px;border-top:1px solid var(--border)}
+
+/* ── MAIN ── */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.panel{display:none;flex-direction:column;flex:1;overflow:hidden}
+.panel.on{display:flex}
+
+/* TOOLBAR */
+.tbar{
+  background:var(--surf);border-bottom:1px solid var(--border);
+  padding:9px 18px;display:flex;align-items:center;gap:9px;flex-shrink:0;
+}
+.tbar-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;flex:1}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
+  border-radius:4px;border:none;font-size:12px;
+  font-family:'Noto Sans KR',sans-serif;font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-amber{background:var(--amber);color:#000}
+.btn-amber:hover{filter:brightness(1.1)}
+.btn-amber:disabled{opacity:.3;cursor:not-allowed}
+.btn-ghost{background:var(--surf2);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.btn-teal{background:rgba(42,184,176,.15);color:var(--teal);border:1px solid rgba(42,184,176,.3)}
+.btn-teal:hover{background:rgba(42,184,176,.25)}
+.btn-rose{background:rgba(224,64,96,.12);color:var(--rose);border:1px solid rgba(224,64,96,.25)}
+.btn-rose:hover{background:rgba(224,64,96,.2)}
+
+/* ── P1: UPLOAD ── */
+.p1-body{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.col-l{padding:20px;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.col-r{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+
+.sec-lbl{
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;
+  color:var(--text3);text-transform:uppercase;padding-bottom:8px;
+  border-bottom:1px solid var(--border);margin-bottom:2px;
+}
+
+/* drop */
+.dropzone{
+  border:2px dashed var(--border2);border-radius:9px;background:var(--surf);
+  padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--amber);background:rgba(240,160,32,.04)}
+.dz-ico{font-size:28px;margin-bottom:8px}
+.dz-ttl{font-size:13px;font-weight:700;margin-bottom:3px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.dz-sub{font-size:11px;color:var(--text3)}
+.prev-img{width:100%;max-height:150px;object-fit:contain;border-radius:6px;border:1px solid var(--border);display:none}
+
+/* form */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f1{display:flex;flex-direction:column;gap:4px}
+.f1.full{grid-column:1/-1}
+.f1 label{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:.07em;text-transform:uppercase}
+input,select,textarea{
+  background:var(--surf2);border:1px solid var(--border);border-radius:4px;
+  padding:7px 9px;font-size:12px;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .15s;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--amber)}
+textarea{resize:vertical;min-height:70px}
+select option{background:var(--surf3)}
+
+/* cutting condition table */
+.ct-table-wrap{overflow-x:auto}
+.ct-table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px}
+.ct-table th{
+  background:var(--surf3);padding:7px 8px;text-align:left;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;
+  color:var(--text2);font-weight:500;border-bottom:1px solid var(--border2);
+  white-space:nowrap;
+}
+.ct-table td{
+  padding:5px 4px;border-bottom:1px solid var(--border);vertical-align:middle;
+}
+.ct-table tr:last-child td{border-bottom:none}
+.ct-table td input{
+  background:transparent;border:1px solid transparent;border-radius:3px;
+  padding:4px 6px;font-size:11px;color:var(--text);width:100%;min-width:60px;
+}
+.ct-table td input:focus{background:var(--surf3);border-color:var(--amber)}
+.ct-row-label{
+  font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text2);
+  padding:5px 8px;background:var(--surf2);white-space:nowrap;font-weight:500;
+}
+
+/* brand header cells */
+.th-brand{background:var(--surf3);text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;padding:8px;border-bottom:2px solid var(--border2)}
+.th-existing{color:var(--text2)}
+.th-iscar{color:var(--amber)}
+
+/* ai extract box */
+.ai-box{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--amber);display:flex;align-items:center;gap:6px}
+.ai-spin{width:9px;height:9px;border:1.5px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* cost section */
+.cost-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cost-card{background:var(--surf);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center}
+.cost-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.cost-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700}
+.cost-unit{font-size:10px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.cost-save{color:var(--ok)}
+.cost-existing{color:var(--text2)}
+.cost-iscar{color:var(--amber)}
+
+/* ── P2: VIEW ── */
+.p2-body{flex:1;display:grid;grid-template-columns:1fr 260px;overflow:hidden}
+.p2-main{padding:24px;overflow-y:auto}
+.p2-side{border-left:1px solid var(--border);background:var(--surf);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+
+.doc-big-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.04em;margin-bottom:10px;line-height:1.2}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.chip{padding:3px 10px;border-radius:3px;font-size:10px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);color:var(--text2)}
+
+/* info cards */
+.icard{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:14px;margin-bottom:10px}
+.icard-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
+
+/* machine/material grid */
+.mm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mm-item{background:var(--surf2);border-radius:5px;padding:9px 10px}
+.mm-key{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;margin-bottom:3px}
+.mm-val{font-size:12px;font-weight:600;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em}
+
+/* view cutting table */
+.view-ct-table{width:100%;border-collapse:collapse;font-size:11px}
+.view-ct-table th{background:var(--surf3);padding:7px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text2);font-weight:500;border:1px solid var(--border)}
+.view-ct-table td{padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px}
+.view-ct-table .row-key{text-align:left;background:var(--surf2);color:var(--text2);font-size:9px;letter-spacing:.06em;white-space:nowrap}
+.col-iscar{background:rgba(240,160,32,.06)}
+.col-iscar td{color:var(--amber)}
+
+/* cost summary */
+.cost-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.cs-item{background:var(--surf2);border-radius:6px;padding:10px;text-align:center}
+.cs-lbl{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.cs-val{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700}
+
+/* ── P3: PPT ── */
+.p3-body{flex:1;display:grid;grid-template-columns:1fr 280px;overflow:hidden}
+.p3-main{padding:22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.p3-side{border-left:1px solid var(--border);background:var(--surf);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+
+.style-opts{display:flex;flex-direction:column;gap:6px}
+.sopt{border:1px solid var(--border);border-radius:6px;padding:11px 13px;cursor:pointer;transition:all .15s}
+.sopt:hover{border-color:var(--border2);background:var(--surf2)}
+.sopt.on{border-color:var(--amber);background:rgba(240,160,32,.07)}
+.sopt-ttl{font-size:12px;font-weight:600;margin-bottom:2px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.03em}
+.sopt-desc{font-size:10px;color:var(--text3)}
+
+.docchk-list{display:flex;flex-direction:column;gap:5px}
+.docchk{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;background:var(--surf);border:1px solid var(--border);cursor:pointer}
+.docchk input[type=checkbox]{width:12px;height:12px;accent-color:var(--amber);cursor:pointer;flex-shrink:0;background:transparent;border:none;padding:0}
+.dck-info{flex:1;min-width:0}
+.dck-ttl{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dck-sub{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+
+.gen-steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.gs{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.gs.active{color:var(--text)}
+.gs.done{color:var(--ok)}
+.gd{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0}
+.gs.active .gd{background:var(--amber);animation:gp 1s infinite}
+.gs.done .gd{background:var(--ok)}
+@keyframes gp{0%,100%{opacity:1}50%{opacity:.2}}
+
+.slides-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sthumb{aspect-ratio:16/9;border-radius:5px;overflow:hidden;position:relative;border:1px solid var(--border);cursor:pointer;transition:transform .15s}
+.sthumb:hover{transform:scale(1.03)}
+.sthumb.on{border-color:var(--amber);box-shadow:0 0 0 2px rgba(240,160,32,.4)}
+.st-dark{background:var(--surf);height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:8px;position:relative}
+.st-num{position:absolute;top:5px;right:6px;font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--text3)}
+.st-accent{width:14px;height:2px;background:var(--amber);margin-bottom:5px}
+.st-h{font-size:7px;font-weight:700;color:var(--text);margin-bottom:2px;font-family:'Barlow Condensed',sans-serif;line-height:1.2}
+.st-s{font-size:5px;color:var(--text3)}
+.st-light{background:#f8f8f8;height:100%;padding:7px;position:relative}
+.st-lh{font-size:7px;font-weight:700;color:#111;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:4px;font-family:'Barlow Condensed',sans-serif}
+.st-lines{display:flex;flex-direction:column;gap:2px}
+.st-line{height:3px;background:#e0e0e0;border-radius:1px}
+
+.result-box{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.85;color:var(--text2);white-space:pre-wrap;max-height:340px;overflow-y:auto}
+.result-box::-webkit-scrollbar{width:3px}
+.result-box::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* sb label */
+.sb-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase}
+hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+
+/* empty */
+.empty{text-align:center;padding:60px 24px;color:var(--text3)}
+.ei{font-size:36px;margin-bottom:12px;opacity:.4}
+.et{font-size:15px;color:var(--text);font-weight:600;margin-bottom:5px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.es{font-size:12px;line-height:1.7;margin-bottom:16px}
+
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;z-index:999;padding:9px 16px;border-radius:5px;font-size:11px;display:none;gap:7px;align-items:center;font-family:'JetBrains Mono',monospace;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.toast.show{display:flex}
+.toast.ok{background:var(--ok);color:#000}
+.toast.err{background:var(--rose);color:#fff}
+.toast.info{background:var(--surf3);color:var(--text);border:1px solid var(--border2)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div></div>
+  <div class="tab-row">
+    <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>업로드</div>
+    <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
+    <div class="tab" id="t3" onclick="goP('p3')"><div class="tab-n">3</div>PPT 생성</div>
+  </div>
+  <div class="topbar-r">
+    <button class="btn btn-ghost" style="color:var(--text3);border-color:var(--border)" onclick="doExport()">⬇ 백업</button>
+    <button class="btn btn-ghost" style="color:var(--text3);border-color:var(--border)" onclick="document.getElementById('imp').click()">⬆ 복원</button>
+    <input type="file" id="imp" accept=".json" style="display:none" onchange="doImport(event)">
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <input class="sb-search" placeholder="🔍  문서 검색..." oninput="renderSB(this.value)">
+    <div class="filter-row">
+      <div class="fchip fa" onclick="setF('all',this)">전체</div>
+      <div class="fchip" onclick="setF('machine',this)">⚙ 가공</div>
+      <div class="fchip" onclick="setF('client',this)">🤝 협의</div>
+      <div class="fchip" onclick="setF('claim',this)">⚠ 불량</div>
+    </div>
+  </div>
+  <div class="doc-list" id="doc-list"></div>
+  <div class="sb-foot">
+    <button class="btn btn-amber" style="width:100%;justify-content:center" onclick="newDoc()">+ 새 문서</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ══ P1: UPLOAD / EDIT ══ -->
+  <div class="panel on" id="p1">
+    <div class="tbar">
+      <div class="tbar-title">① 굿노트 캡처 업로드</div>
+      <button class="btn btn-ghost" onclick="cancelP1()">취소</button>
+      <button class="btn btn-amber" id="btn-save" onclick="saveDoc()" disabled>저장 →</button>
+    </div>
+
+    <div class="p1-body">
+      <!-- LEFT -->
+      <div class="col-l">
+        <div class="sec-lbl">이미지 업로드</div>
+        <div class="dropzone" id="dz"
+          onclick="document.getElementById('fi').click()"
+          ondragover="dzOver(event)" ondrop="dzDrop(event)" ondragleave="dzLeave()">
+          <div class="dz-ico">📸</div>
+          <div class="dz-ttl">굿노트 캡처 이미지</div>
+          <div class="dz-sub">클릭 또는 드래그 앤 드롭</div>
+        </div>
+        <input type="file" id="fi" accept="image/*" style="display:none" onchange="onFile(event)">
+        <img id="prev" class="prev-img">
+
+        <div class="sec-lbl">기본 정보</div>
+        <div class="fg2">
+          <div class="f1"><label>문서 제목 *</label><input id="f-title" placeholder="예: CTR Raptor Knuckle OP30 T20" oninput="chkSave()"></div>
+          <div class="f1"><label>날짜</label><input type="date" id="f-date"></div>
+          <div class="f1"><label>문서 유형</label>
+            <select id="f-type" onchange="renderDyn()">
+              <option value="machine">⚙️ 가공 테스트 레포트</option>
+              <option value="client">🤝 고객사 협의</option>
+              <option value="claim">⚠️ 불량·클레임</option>
+            </select>
+          </div>
+          <div class="f1"><label>결과</label>
+            <select id="f-result">
+              <option value="OK">✅ OK</option>
+              <option value="NG">❌ NG</option>
+              <option value="WIP">🔄 진행중</option>
+            </select>
+          </div>
+          <div class="f1"><label>고객사 / 현장</label><input id="f-cust" placeholder="예: CTR 대합공장, 효림산업"></div>
+          <div class="f1"><label>담당자</label><input id="f-author" placeholder="이름"></div>
+        </div>
+
+        <!-- 유형별 동적 섹션 -->
+        <div id="dyn-section"></div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-r">
+        <div class="sec-lbl">AI 텍스트 추출</div>
+        <div class="ai-box">
+          <div class="ai-lbl"><div class="ai-spin" id="ai-spin"></div><span id="ai-lbl">이미지 업로드 시 자동 추출</span></div>
+          <div class="f1">
+            <label>추출된 내용</label>
+            <textarea id="f-extracted" style="min-height:130px" placeholder="AI가 굿노트에서 텍스트를 추출합니다..."></textarea>
+          </div>
+        </div>
+
+        <!-- 가공조건 테이블 (machine 유형 전용) -->
+        <div id="ct-section">
+          <div class="sec-lbl">절삭 조건 (Cutting Condition)</div>
+          <div class="ct-table-wrap">
+            <table class="ct-table" id="ct-tbl">
+              <thead>
+                <tr>
+                  <th style="width:110px">항목</th>
+                  <th class="th-brand th-existing" colspan="2">기존 (LOCAL)</th>
+                  <th class="th-brand th-iscar" colspan="2">ISCAR</th>
+                </tr>
+                <tr>
+                  <th></th>
+                  <th>Rough</th><th>Finish</th>
+                  <th>Rough</th><th>Finish</th>
+                </tr>
+              </thead>
+              <tbody id="ct-body"></tbody>
+            </table>
+          </div>
+
+          <div class="sec-lbl" style="margin-top:14px">원가 비교</div>
+          <div class="cost-row">
+            <div class="cost-card">
+              <div class="cost-label">기존 C/T</div>
+              <input id="c-ct-old" placeholder="970" style="text-align:center;font-size:16px;font-weight:700;background:transparent;border:1px solid var(--border)">
+              <div class="cost-unit">sec</div>
+            </div>
+            <div class="cost-card">
+              <div class="cost-label">ISCAR C/T</div>
+              <input id="c-ct-new" placeholder="936" style="text-align:center;font-size:16px;font-weight:700;color:var(--amber);background:transparent;border:1px solid var(--border)">
+              <div class="cost-unit">sec</div>
+            </div>
+            <div class="cost-card">
+              <div class="cost-label">개당 공구비 (CPP)</div>
+              <input id="c-cpp" placeholder="79.63" style="text-align:center;font-size:16px;font-weight:700;color:var(--ok);background:transparent;border:1px solid var(--border)">
+              <div class="cost-unit">원</div>
+            </div>
+          </div>
+          <div class="f1" style="margin-top:10px">
+            <label>원가 절감 / 비고</label>
+            <input id="c-saving" placeholder="예: 1.6% 원가 절감, 공구비 800원→879.63원">
+          </div>
+        </div>
+
+        <div class="f1">
+          <label>요약 / 특이사항</label>
+          <textarea id="f-summary" style="min-height:70px" placeholder="핵심 결론, 트러블, 다음 액션"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ P2: VIEW ══ -->
+  <div class="panel" id="p2">
+    <div class="tbar">
+      <div class="tbar-title" id="p2-ttl">문서 검토</div>
+      <button class="btn btn-ghost" onclick="editDoc()">✏️ 편집</button>
+      <button class="btn btn-rose" onclick="delDoc()">🗑</button>
+      <button class="btn btn-teal" onclick="goP('p3')">📊 PPT →</button>
+    </div>
+    <div class="p2-body">
+      <div class="p2-main" id="p2-main">
+        <div class="empty"><div class="ei">📂</div><div class="et">문서를 선택하세요</div><div class="es">왼쪽 목록에서 문서를 선택하거나<br>새 문서를 작성하세요.</div><button class="btn btn-amber" onclick="newDoc()">+ 새 문서</button></div>
+      </div>
+      <div class="p2-side">
+        <div class="sb-lbl">작업</div>
+        <button class="btn btn-ghost" style="justify-content:center" onclick="editDoc()">✏️ 편집</button>
+        <button class="btn btn-ghost" style="justify-content:center" onclick="reExtract()">🔄 재추출</button>
+        <button class="btn btn-teal" style="justify-content:center" onclick="goP('p3')">📊 PPT 생성</button>
+        <hr class="d">
+        <div class="sb-lbl">원본 이미지</div>
+        <img id="p2-img" style="width:100%;border-radius:5px;border:1px solid var(--border);display:none">
+        <div id="p2-noimg" style="font-size:11px;color:var(--text3);text-align:center;padding:12px 0">이미지 없음</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ P3: PPT ══ -->
+  <div class="panel" id="p3">
+    <div class="tbar">
+      <div class="tbar-title">③ PPT 슬라이드 생성</div>
+      <button class="btn btn-ghost" onclick="goP('p2')">← 돌아가기</button>
+      <button class="btn btn-amber" id="btn-gen" onclick="genPPT()">🤖 AI 생성</button>
+    </div>
+    <div class="p3-body">
+      <div class="p3-main">
+        <div id="p3-before">
+          <div class="sec-lbl" style="margin-bottom:10px">PPT 스타일</div>
+          <div class="style-opts">
+            <div class="sopt on" data-s="summary" onclick="pickS(this)"><div class="sopt-ttl">🎯 영업·보고 Summary</div><div class="sopt-desc">고객사 제출 · 원가절감 강조 · 5-6장</div></div>
+            <div class="sopt" data-s="technical" onclick="pickS(this)"><div class="sopt-ttl">⚙️ 기술 상세 Report</div><div class="sopt-desc">가공조건·수명 데이터 포함 · 8-10장</div></div>
+            <div class="sopt" data-s="proposal" onclick="pickS(this)"><div class="sopt-ttl">📋 개선 제안 Proposal</div><div class="sopt-desc">RE-TOOLING 제안 · 비용 효과 · 6-8장</div></div>
+          </div>
+          <div class="sec-lbl" style="margin:14px 0 9px">포함 문서</div>
+          <div class="docchk-list" id="p3-docs"></div>
+          <div class="sec-lbl" style="margin:12px 0 7px">추가 지시</div>
+          <textarea id="p3-extra" style="min-height:55px" placeholder="예: 영문 병기, 경쟁사 비교표 포함, 6장으로 제한..."></textarea>
+        </div>
+        <div id="p3-after" style="display:none">
+          <div class="sec-lbl" style="margin-bottom:10px">슬라이드 미리보기</div>
+          <div class="slides-grid" id="slides-grid"></div>
+          <div class="sec-lbl" style="margin-bottom:7px">전체 구성안</div>
+          <div class="result-box" id="ppt-box"></div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn btn-amber" onclick="dlResult()">⬇ 다운로드</button>
+            <button class="btn btn-ghost" onclick="cpResult()">📋 복사</button>
+            <button class="btn btn-ghost" onclick="resetPPT()">🔄 재생성</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p3-side">
+        <div class="sb-lbl">진행 상황</div>
+        <ul class="gen-steps">
+          <li class="gs" id="gs1"><div class="gd"></div>문서 분석</li>
+          <li class="gs" id="gs2"><div class="gd"></div>슬라이드 구성</li>
+          <li class="gs" id="gs3"><div class="gd"></div>내용 작성</li>
+          <li class="gs" id="gs4"><div class="gd"></div>완료</li>
+        </ul>
+        <hr class="d">
+        <div class="sb-lbl">선택 문서</div>
+        <div id="sel-info" style="font-size:11px;color:var(--text2);line-height:1.8"></div>
+        <hr class="d">
+        <div class="sb-lbl">PPT 활용 팁</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.9">
+          <div>① .txt 다운로드</div>
+          <div>② PowerPoint 실행</div>
+          <div>③ 슬라이드별 붙여넣기</div>
+          <div>④ 가공사진·그래프 삽입</div>
+          <div>⑤ 회사 템플릿 적용</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- main -->
+</div><!-- app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+let docs = JSON.parse(localStorage.getItem('iscar-rs') || '[]');
+let cid = null, curFil = 'all', pptStyle = 'summary', pptTxt = '', img64 = null;
+
+// 절삭조건 테이블 행 정의 (실제 레포트 기준)
+const CT_ROWS = [
+  {key:'brand',    label:'Brand'},
+  {key:'holder',   label:'Holder'},
+  {key:'insert',   label:'Insert'},
+  {key:'grade',    label:'Grade'},
+  {key:'vc',       label:'Vc (m/min)'},
+  {key:'rpm',      label:'N (RPM)'},
+  {key:'fz',       label:'fz (mm/tooth)'},
+  {key:'zeff',     label:'날수 (Zeff)'},
+  {key:'f',        label:'F (mm/min)'},
+  {key:'ae',       label:'Ae (mm)'},
+  {key:'ap',       label:'Ap (mm)'},
+  {key:'coolant',  label:'Coolant'},
+  {key:'ct',       label:'Cycle Time'},
+  {key:'tl',       label:'Tool Life'},
+  {key:'remark',   label:'Remark'},
+];
+
+// 유형별 추가 필드
+const TYPE_EXTRA = {
+  machine: [
+    {id:'m-machine', label:'장비명 (Brand & Model)', placeholder:'예: HYUNDAI WIA F 600B'},
+    {id:'m-spindle', label:'Spindle Taper', placeholder:'예: BT50'},
+    {id:'m-power',   label:'Spindle Power', placeholder:'예: 22/15 kW'},
+    {id:'m-rpm',     label:'Max RPM', placeholder:'예: 4,500 rpm'},
+    {id:'m-part',    label:'부품명 (Part Name)', placeholder:'예: Ford Raptor Knuckle'},
+    {id:'m-mat',     label:'피삭재 (Material Spec.)', placeholder:'예: FCD550, SCM440, SUS316'},
+    {id:'m-industry',label:'산업 (Industry)', placeholder:'예: Automotive'},
+    {id:'m-process', label:'공정 (Process)', placeholder:'예: OP30 T20 Back Taper Milling'},
+  ],
+  client: [
+    {id:'cl-attendees', label:'참석자', placeholder:'고객사 홍길동 / 당사 김철수'},
+    {id:'cl-agenda',    label:'협의 안건', placeholder:'주요 논의 항목'},
+    {id:'cl-result',    label:'협의 결과', placeholder:'결정사항, 합의 내용'},
+    {id:'cl-action',    label:'다음 액션 / 일정', placeholder:'예: 2주 내 샘플 제출'},
+  ],
+  claim: [
+    {id:'cr-tool',     label:'해당 공구 (형번)', placeholder:'예: HP ANKT 0702PNTR IC908'},
+    {id:'cr-symptom',  label:'불량 증상', placeholder:'예: 조기 파손, 치수 불량'},
+    {id:'cr-cause',    label:'원인 분석', placeholder:'예: 과도한 절삭깊이, 재종 불일치'},
+    {id:'cr-action',   label:'조치 사항', placeholder:'예: 재종 변경, Vc 감소'},
+  ],
+};
+
+const TYPE_LBL = {machine:'⚙️ 가공테스트', client:'🤝 고객사협의', claim:'⚠️ 불량클레임'};
+const TYPE_COL = {machine:'var(--amber)', client:'var(--teal)', claim:'var(--rose)'};
+const RES_CLS  = {OK:'s-ok', NG:'s-ng', WIP:'s-wip'};
+
+// ── BOOT ──────────────────────────────────────────────
+(function(){
+  document.getElementById('f-date').value = tod();
+  buildCTTable();
+  renderDyn();
+  renderSB();
+  populateP3();
+  if(docs.length){ cid = docs[docs.length-1].id; renderP2(cid); }
+})();
+
+function tod(){ return new Date().toISOString().split('T')[0]; }
+function sv() { localStorage.setItem('iscar-rs', JSON.stringify(docs)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+
+// ── CUTTING CONDITION TABLE ──
+function buildCTTable(){
+  const tb = document.getElementById('ct-body');
+  tb.innerHTML = CT_ROWS.map(r => `
+    <tr>
+      <td class="ct-row-label">${r.label}</td>
+      <td><input id="ct-${r.key}-eR" placeholder="-"></td>
+      <td><input id="ct-${r.key}-eF" placeholder="-"></td>
+      <td><input id="ct-${r.key}-iR" placeholder="-"></td>
+      <td><input id="ct-${r.key}-iF" placeholder="-"></td>
+    </tr>
+  `).join('');
+}
+
+function getCTValues(){
+  const obj = {};
+  CT_ROWS.forEach(r => {
+    ['eR','eF','iR','iF'].forEach(col => {
+      const el = document.getElementById(`ct-${r.key}-${col}`);
+      if(el) obj[`${r.key}_${col}`] = el.value;
+    });
+  });
+  return obj;
+}
+
+function setCTValues(data){
+  if(!data) return;
+  CT_ROWS.forEach(r => {
+    ['eR','eF','iR','iF'].forEach(col => {
+      const el = document.getElementById(`ct-${r.key}-${col}`);
+      if(el) el.value = data[`${r.key}_${col}`] || '';
+    });
+  });
+}
+
+function clearCT(){
+  CT_ROWS.forEach(r => ['eR','eF','iR','iF'].forEach(col => {
+    const el = document.getElementById(`ct-${r.key}-${col}`);
+    if(el) el.value = '';
+  }));
+}
+
+// ── DYNAMIC FIELDS ──
+function renderDyn(){
+  const type = document.getElementById('f-type').value;
+  const show = type === 'machine';
+  document.getElementById('ct-section').style.display = show ? '' : 'none';
+
+  const fields = TYPE_EXTRA[type] || [];
+  const col = TYPE_COL[type];
+  document.getElementById('dyn-section').innerHTML = `
+    <div style="background:var(--surf);border:1px solid var(--border);border-left:3px solid ${col};border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:${col};text-transform:uppercase;margin-bottom:2px">${TYPE_LBL[type]} 전용 항목</div>
+      <div class="fg2">
+        ${fields.map(f=>`<div class="f1 full"><label>${f.label}</label><input id="${f.id}" placeholder="${f.placeholder}"></div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function getDynValues(){
+  const type = document.getElementById('f-type').value;
+  const obj = {};
+  (TYPE_EXTRA[type]||[]).forEach(f => {
+    const el = document.getElementById(f.id);
+    if(el) obj[f.id] = el.value;
+  });
+  return obj;
+}
+
+function setDynValues(type, data){
+  if(!data) return;
+  (TYPE_EXTRA[type]||[]).forEach(f => {
+    const el = document.getElementById(f.id);
+    if(el) el.value = data[f.id] || '';
+  });
+}
+
+// ── PANELS ──
+function goP(id){
+  ['p1','p2','p3'].forEach((p,i) => {
+    document.getElementById(p).classList.toggle('on', p===id);
+    document.getElementById('t'+(i+1)).classList.toggle('on', p===id);
+  });
+  if(id==='p3'){ populateP3(); updSelInfo(); }
+}
+
+// ── SIDEBAR ──
+function setF(f, el){
+  curFil = f;
+  document.querySelectorAll('.fchip').forEach(c => c.className = 'fchip');
+  el.className = 'fchip f'+f[0];
+  renderSB();
+}
+
+function renderSB(q=''){
+  const el = document.getElementById('doc-list');
+  let list = curFil==='all' ? docs : docs.filter(d=>d.type===curFil);
+  if(q) list = list.filter(d=>d.title.toLowerCase().includes(q.toLowerCase()));
+  if(!list.length){
+    el.innerHTML = `<div style="padding:18px 8px;text-align:center;font-size:11px;color:var(--text3)"><div style="font-size:24px;margin-bottom:6px">📂</div>문서 없음</div>`;
+    return;
+  }
+  el.innerHTML = [...list].reverse().map(d=>`
+    <div class="ditem${d.id===cid?' on':''}" onclick="selDoc('${d.id}')">
+      <div class="ditem-bar" style="background:${TYPE_COL[d.type]||'var(--border)'}"></div>
+      <div class="ditem-ttl">${d.title}</div>
+      <div class="ditem-meta"><span>${d.date||'--'}</span><span class="sticker ${RES_CLS[d.result]||'s-wip'}">${d.result||'WIP'}</span></div>
+    </div>
+  `).join('');
+}
+
+function selDoc(id){ cid=id; renderSB(); renderP2(id); goP('p2'); }
+
+// ── P1: NEW / SAVE ──
+function newDoc(){
+  cid = null; img64 = null;
+  ['f-title','f-cust','f-author','f-extracted','f-summary','c-ct-old','c-ct-new','c-cpp','c-saving'].forEach(i=>{
+    const el=document.getElementById(i); if(el) el.value='';
+  });
+  document.getElementById('f-date').value = tod();
+  document.getElementById('f-type').value = 'machine';
+  document.getElementById('f-result').value = 'OK';
+  document.getElementById('prev').style.display = 'none';
+  document.getElementById('btn-save').disabled = true;
+  clearCT(); renderDyn(); renderSB(); goP('p1');
+}
+
+function cancelP1(){
+  if(docs.length){ if(!cid) cid=docs[docs.length-1].id; renderP2(cid); goP('p2'); }
+}
+
+function chkSave(){
+  document.getElementById('btn-save').disabled = !document.getElementById('f-title').value.trim();
+}
+
+function saveDoc(){
+  const title = document.getElementById('f-title').value.trim();
+  if(!title){ toast('제목을 입력하세요','err'); return; }
+  const doc = {
+    id: cid||uid(), title,
+    date:   document.getElementById('f-date').value,
+    type:   document.getElementById('f-type').value,
+    result: document.getElementById('f-result').value,
+    customer: document.getElementById('f-cust').value,
+    author: document.getElementById('f-author').value,
+    extracted: document.getElementById('f-extracted').value,
+    summary: document.getElementById('f-summary').value,
+    ctData:  getCTValues(),
+    ctOld:   document.getElementById('c-ct-old').value,
+    ctNew:   document.getElementById('c-ct-new').value,
+    cpp:     document.getElementById('c-cpp').value,
+    saving:  document.getElementById('c-saving').value,
+    dynFields: getDynValues(),
+    image: img64,
+    updatedAt: new Date().toISOString(),
+  };
+  const i = docs.findIndex(d=>d.id===doc.id);
+  if(i>=0) docs[i]=doc; else docs.push(doc);
+  sv(); cid=doc.id;
+  document.getElementById('t1').classList.add('done');
+  renderSB(); renderP2(doc.id); goP('p2');
+  toast('저장 완료 ✓','ok');
+}
+
+// ── DROP ──
+function dzOver(e){e.preventDefault();document.getElementById('dz').classList.add('drag')}
+function dzLeave(){document.getElementById('dz').classList.remove('drag')}
+function dzDrop(e){e.preventDefault();dzLeave();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadImg(f)}
+function onFile(e){const f=e.target.files[0];if(f)loadImg(f)}
+function loadImg(file){
+  const r=new FileReader();
+  r.onload=async ev=>{
+    img64=ev.target.result;
+    const p=document.getElementById('prev'); p.src=img64; p.style.display='block';
+    await extractAndFill(img64);
+  };
+  r.readAsDataURL(file);
+}
+
+async function extractAndFill(b64url){
+  const spin=document.getElementById('ai-spin'), lbl=document.getElementById('ai-lbl');
+  spin.style.display='block'; lbl.textContent='AI 분석 중...';
+  try{
+    const b64=b64url.split(',')[1], mt=b64url.split(';')[0].split(':')[1];
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mt,data:b64}},
+          {type:'text',text:`이 절삭공구 업무 이미지(가공 테스트 레포트, 협의 내용, 불량 리포트 등)에서 모든 텍스트를 추출하세요.
+가공조건 테이블이 있다면 다음 형식으로 JSON도 추출해주세요:
+{
+  "title": "문서 제목",
+  "customer": "고객사명",
+  "ct_table": {
+    "brand_eR": "기존Rough브랜드", "brand_eF": "기존Finish브랜드",
+    "brand_iR": "ISCAR Rough브랜드", "brand_iF": "ISCAR Finish브랜드",
+    "holder_eR": "", "holder_eF": "", "holder_iR": "", "holder_iF": "",
+    "insert_eR": "", "insert_eF": "", "insert_iR": "", "insert_iF": "",
+    "grade_eR": "", "grade_eF": "", "grade_iR": "", "grade_iF": "",
+    "vc_eR": "", "vc_eF": "", "vc_iR": "", "vc_iF": "",
+    "rpm_eR": "", "rpm_eF": "", "rpm_iR": "", "rpm_iF": "",
+    "fz_eR": "", "fz_eF": "", "fz_iR": "", "fz_iF": "",
+    "zeff_eR": "", "zeff_eF": "", "zeff_iR": "", "zeff_iF": "",
+    "f_eR": "", "f_eF": "", "f_iR": "", "f_iF": "",
+    "ae_eR": "", "ae_eF": "", "ae_iR": "", "ae_iF": "",
+    "ap_eR": "", "ap_eF": "", "ap_iR": "", "ap_iF": "",
+    "coolant_eR": "", "coolant_eF": "", "coolant_iR": "", "coolant_iF": "",
+    "ct_eR": "", "ct_eF": "", "ct_iR": "", "ct_iF": "",
+    "tl_eR": "", "tl_eF": "", "tl_iR": "", "tl_iF": "",
+    "remark_eR": "", "remark_eF": "", "remark_iR": "", "remark_iF": ""
+  },
+  "ct_old": "기존 총 C/T(sec)",
+  "ct_new": "ISCAR 총 C/T(sec)",
+  "cpp": "개당 공구비",
+  "saving": "원가 절감율 또는 금액",
+  "machine": "장비명",
+  "material": "피삭재",
+  "part": "부품명",
+  "summary": "핵심 결과 요약"
+}
+JSON이 있으면 \`\`\`json ... \`\`\` 블록으로 먼저 출력하고, 그 다음에 전체 텍스트를 출력하세요.`}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'';
+
+    // JSON 파싱 시도
+    const jsonMatch=raw.match(/```json\s*([\s\S]*?)```/);
+    if(jsonMatch){
+      try{
+        const j=JSON.parse(jsonMatch[1]);
+        if(j.title && !document.getElementById('f-title').value) {
+          document.getElementById('f-title').value=j.title; chkSave();
+        }
+        if(j.customer) document.getElementById('f-cust').value=j.customer;
+        if(j.ct_table) setCTValues(j.ct_table);
+        if(j.ct_old)   document.getElementById('c-ct-old').value=j.ct_old;
+        if(j.ct_new)   document.getElementById('c-ct-new').value=j.ct_new;
+        if(j.cpp)      document.getElementById('c-cpp').value=j.cpp;
+        if(j.saving)   document.getElementById('c-saving').value=j.saving;
+        if(j.summary)  document.getElementById('f-summary').value=j.summary;
+        // machine fields
+        if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}
+        if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}
+        if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}
+        toast('절삭조건 테이블 자동 입력 완료 ✓','ok');
+      }catch(e){}
+    }
+    // 전체 텍스트
+    const plainText=raw.replace(/```json[\s\S]*?```/,'').trim();
+    document.getElementById('f-extracted').value=plainText;
+    if(!document.getElementById('f-title').value && plainText){
+      document.getElementById('f-title').value=plainText.split('\n')[0].trim().slice(0,50);
+      chkSave();
+    }
+    lbl.textContent='추출 완료 ✓';
+  }catch(e){
+    lbl.textContent='추출 실패 — 직접 입력하세요';
+    toast('추출 실패: '+e.message,'err');
+  }finally{ spin.style.display='none'; }
+}
+
+// ── P2: VIEW ──
+function renderP2(id){
+  const d=docs.find(x=>x.id===id); if(!d) return;
+  document.getElementById('p2-ttl').textContent=d.title;
+  const col=TYPE_COL[d.type]||'var(--border)';
+  const rc=RES_CLS[d.result]||'s-wip';
+
+  // dynamic fields display
+  const allFields=[...Object.values(TYPE_EXTRA).flat()];
+  const df=d.dynFields||{};
+  const dynItems=Object.entries(df).filter(([,v])=>v).map(([k,v])=>{
+    const fd=allFields.find(f=>f.id===k);
+    return `<div class="mm-item"><div class="mm-key">${fd?.label||k}</div><div class="mm-val" style="font-size:11px;font-weight:500">${v}</div></div>`;
+  }).join('');
+
+  // cutting condition table for view
+  let ctHTML='';
+  if(d.type==='machine' && d.ctData){
+    const cd=d.ctData;
+    const hasData=CT_ROWS.some(r=>cd[`${r.key}_iR`]||cd[`${r.key}_eR`]);
+    if(hasData){
+      ctHTML=`<div class="icard"><div class="icard-lbl">절삭 조건 (Cutting Condition)</div>
+        <div style="overflow-x:auto">
+        <table class="view-ct-table" style="min-width:480px">
+          <thead>
+            <tr>
+              <th style="width:100px">항목</th>
+              <th colspan="2">기존 (LOCAL)</th>
+              <th colspan="2" style="color:var(--amber)">ISCAR</th>
+            </tr>
+            <tr>
+              <th></th><th>Rough</th><th>Finish</th>
+              <th style="color:var(--amber)">Rough</th><th style="color:var(--amber)">Finish</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${CT_ROWS.map(r=>`
+              <tr>
+                <td class="row-key">${r.label}</td>
+                <td>${cd[`${r.key}_eR`]||'-'}</td>
+                <td>${cd[`${r.key}_eF`]||'-'}</td>
+                <td class="col-iscar">${cd[`${r.key}_iR`]||'-'}</td>
+                <td class="col-iscar">${cd[`${r.key}_iF`]||'-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table></div>
+        ${(d.ctOld||d.ctNew||d.cpp)?`
+        <div class="cost-summary">
+          ${d.ctOld?`<div class="cs-item"><div class="cs-lbl">기존 C/T</div><div class="cs-val" style="color:var(--text2)">${d.ctOld}s</div></div>`:''}
+          ${d.ctNew?`<div class="cs-item"><div class="cs-lbl">ISCAR C/T</div><div class="cs-val" style="color:var(--amber)">${d.ctNew}s</div></div>`:''}
+          ${d.cpp?`<div class="cs-item"><div class="cs-lbl">CPP</div><div class="cs-val" style="color:var(--ok)">${d.cpp}원</div></div>`:''}
+        </div>`:''}
+        ${d.saving?`<div style="margin-top:8px;padding:8px 12px;background:rgba(40,184,112,.1);border:1px solid rgba(40,184,112,.2);border-radius:5px;font-size:12px;color:var(--ok);font-weight:600">💰 ${d.saving}</div>`:''}
+      </div>`;
+    }
+  }
+
+  document.getElementById('p2-main').innerHTML=`
+    <div style="height:3px;border-radius:2px;background:${col};margin-bottom:16px"></div>
+    <div class="doc-big-title">${d.title}</div>
+    <div class="chips">
+      <span class="chip">${d.date||'날짜 없음'}</span>
+      <span class="chip">${TYPE_LBL[d.type]||d.type}</span>
+      ${d.customer?`<span class="chip">🏭 ${d.customer}</span>`:''}
+      ${d.author?`<span class="chip">👤 ${d.author}</span>`:''}
+      <span class="sticker ${rc}" style="padding:4px 10px;font-size:11px">${d.result}</span>
+    </div>
+    ${dynItems?`<div class="icard"><div class="icard-lbl">세부 정보</div><div class="mm-grid">${dynItems}</div></div>`:''}
+    ${ctHTML}
+    ${d.summary?`<div class="icard"><div class="icard-lbl">요약 / 특이사항</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${d.summary}</div></div>`:''}
+    ${d.extracted?`<div class="icard"><div class="icard-lbl">추출된 원문</div><div style="font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text2)">${d.extracted}</div></div>`:''}
+    ${!d.summary&&!d.extracted&&!dynItems?`<div class="empty"><div class="ei">📝</div><div class="et">내용 없음</div><button class="btn btn-amber" onclick="editDoc()">✏️ 편집</button></div>`:''}
+  `;
+
+  if(d.image){document.getElementById('p2-img').src=d.image;document.getElementById('p2-img').style.display='block';document.getElementById('p2-noimg').style.display='none';}
+  else{document.getElementById('p2-img').style.display='none';document.getElementById('p2-noimg').style.display='block';}
+}
+
+function editDoc(){
+  const d=docs.find(x=>x.id===cid); if(!d) return;
+  img64=d.image||null;
+  document.getElementById('f-title').value=d.title;
+  document.getElementById('f-date').value=d.date||'';
+  document.getElementById('f-type').value=d.type||'machine';
+  document.getElementById('f-result').value=d.result||'OK';
+  document.getElementById('f-cust').value=d.customer||'';
+  document.getElementById('f-author').value=d.author||'';
+  document.getElementById('f-extracted').value=d.extracted||'';
+  document.getElementById('f-summary').value=d.summary||'';
+  document.getElementById('c-ct-old').value=d.ctOld||'';
+  document.getElementById('c-ct-new').value=d.ctNew||'';
+  document.getElementById('c-cpp').value=d.cpp||'';
+  document.getElementById('c-saving').value=d.saving||'';
+  if(d.image){document.getElementById('prev').src=d.image;document.getElementById('prev').style.display='block';}
+  renderDyn();
+  setTimeout(()=>{ setCTValues(d.ctData||{}); setDynValues(d.type, d.dynFields||{}); },30);
+  document.getElementById('btn-save').disabled=false;
+  goP('p1');
+}
+
+async function reExtract(){
+  const d=docs.find(x=>x.id===cid);
+  if(!d||!d.image){toast('이미지가 없습니다','err');return;}
+  editDoc(); await extractAndFill(d.image);
+}
+
+function delDoc(){
+  if(!cid||!confirm('정말 삭제하시겠습니까?')) return;
+  docs=docs.filter(d=>d.id!==cid); sv(); cid=null; renderSB();
+  if(docs.length){cid=docs[docs.length-1].id;renderP2(cid);}
+  else document.getElementById('p2-main').innerHTML=`<div class="empty"><div class="ei">📂</div><div class="et">문서를 선택하세요</div><button class="btn btn-amber" onclick="newDoc()">+ 새 문서</button></div>`;
+  toast('삭제 완료','ok');
+}
+
+// ── P3: PPT ──
+function pickS(el){document.querySelectorAll('.sopt').forEach(s=>s.classList.remove('on'));el.classList.add('on');pptStyle=el.dataset.s;}
+
+function populateP3(){
+  const el=document.getElementById('p3-docs');if(!el)return;
+  if(!docs.length){el.innerHTML=`<div style="font-size:11px;color:var(--text3)">저장된 문서가 없습니다.</div>`;return;}
+  el.innerHTML=[...docs].reverse().map(d=>`
+    <label class="docchk">
+      <input type="checkbox" value="${d.id}" ${d.id===cid?'checked':''}>
+      <div class="dck-info">
+        <div class="dck-ttl">${TYPE_LBL[d.type]||'📄'} ${d.title}</div>
+        <div class="dck-sub">${d.date||'--'} ${d.customer?'· '+d.customer:''}</div>
+      </div>
+      <span class="sticker ${RES_CLS[d.result]||'s-wip'}">${d.result||'WIP'}</span>
+    </label>
+  `).join('');
+  document.querySelectorAll('#p3-docs input').forEach(i=>i.addEventListener('change',updSelInfo));
+}
+
+function updSelInfo(){
+  const ids=[...document.querySelectorAll('#p3-docs input:checked')].map(i=>i.value);
+  const el=document.getElementById('sel-info');
+  el.innerHTML=ids.length?ids.map(id=>{const d=docs.find(x=>x.id===id);return d?`<div>· ${d.title}</div>`:''}).join(''):'<span style="color:var(--text3)">선택 없음</span>';
+}
+
+const GSS=['gs1','gs2','gs3','gs4'];
+function setGS(id,s){const el=document.getElementById(id);if(el)el.className='gs '+s;}
+
+async function genPPT(){
+  const ids=[...document.querySelectorAll('#p3-docs input:checked')].map(i=>i.value);
+  if(!ids.length){toast('문서를 선택하세요','err');return;}
+  const sel=ids.map(id=>docs.find(d=>d.id===id)).filter(Boolean);
+  const extra=document.getElementById('p3-extra').value;
+
+  document.getElementById('p3-before').style.display='none';
+  document.getElementById('p3-after').style.display='none';
+  document.getElementById('btn-gen').disabled=true;
+  GSS.forEach(id=>setGS(id,''));
+
+  const styleLbl={
+    summary:'영업·보고용 Summary (원가절감 강조, 고객사 제출, 5-6장)',
+    technical:'기술 상세 Report (가공조건·수명 데이터 포함, 사내 기술 공유, 8-10장)',
+    proposal:'개선 제안 Proposal (RE-TOOLING 제안, 비용 효과 강조, 6-8장)',
+  };
+
+  try{
+    setGS('gs1','active'); await dl(500); setGS('gs1','done'); setGS('gs2','active');
+
+    const allFields=[...Object.values(TYPE_EXTRA).flat()];
+    const docBlocks=sel.map((d,i)=>{
+      const df=d.dynFields||{};
+      const dynTxt=Object.entries(df).filter(([,v])=>v).map(([k,v])=>{const f=allFields.find(x=>x.id===k);return `  ${f?.label||k}: ${v}`;}).join('\n');
+      const cd=d.ctData||{};
+      const ctRows=CT_ROWS.filter(r=>cd[`${r.key}_iR`]||cd[`${r.key}_eR`])
+        .map(r=>`  ${r.label}: 기존(R:${cd[`${r.key}_eR`]||'-'} F:${cd[`${r.key}_eF`]||'-'}) | ISCAR(R:${cd[`${r.key}_iR`]||'-'} F:${cd[`${r.key}_iF`]||'-'})`).join('\n');
+      return `
+[문서 ${i+1}] ${TYPE_LBL[d.type]}: ${d.title}
+날짜: ${d.date||'미입력'} | 결과: ${d.result} | 고객사: ${d.customer||'미입력'} | 담당자: ${d.author||'미입력'}
+${dynTxt}
+${ctRows?'[절삭 조건]\n'+ctRows:''}
+기존 C/T: ${d.ctOld||'미입력'}sec | ISCAR C/T: ${d.ctNew||'미입력'}sec | CPP: ${d.cpp||'미입력'}원
+원가 절감: ${d.saving||'미입력'}
+요약: ${d.summary||'미입력'}
+원문: ${(d.extracted||'').slice(0,400)}
+      `.trim();
+    }).join('\n\n---\n\n');
+
+    const prompt=`당신은 ISCAR 절삭공구 전문 기술영업 컨설턴트입니다.
+아래 절삭공구 업무 문서를 분석하여 ${styleLbl[pptStyle]} PPT 구성안을 한국어로 작성해주세요.
+${extra?`\n추가 요청: ${extra}\n`:''}
+
+=== 문서 ===
+${docBlocks}
+============
+
+다음 형식으로 작성하세요:
+
+【슬라이드 1】 제목 슬라이드
+[레이아웃] 다크 배경, 센터 정렬
+[메인 제목] ...
+[서브 제목] ...
+[하단] 고객사명 · 날짜 · ISCAR Korea
+
+【슬라이드 2】 개요 (Information)
+[레이아웃] 2단 구성 (Machine 정보 | Material 정보)
+[Machine] 장비명 / Spindle / 출력 / RPM
+[Material] 산업 / 부품명 / 피삭재 / 개선 공정
+
+슬라이드마다 [노트] 발표자 참고사항을 포함하세요.
+절삭조건 데이터가 있으면 반드시 표 형식으로 활용하세요.
+원가절감 수치(C/T 단축, CPP, %)는 크게 강조하세요.
+마지막에 [디자인 가이드] 색상·레이아웃 한 단락을 추가하세요.`;
+
+    setGS('gs2','done'); setGS('gs3','active');
+
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    pptTxt=data.content?.[0]?.text||'생성 실패';
+
+    setGS('gs3','done'); setGS('gs4','active'); await dl(400); setGS('gs4','done');
+
+    document.getElementById('ppt-box').textContent=pptTxt;
+    renderThumbs(pptTxt, sel[0]);
+    document.getElementById('p3-after').style.display='block';
+    document.getElementById('t3').classList.add('done');
+    toast('PPT 구성안 생성 완료!','ok');
+  }catch(e){
+    toast('생성 실패: '+e.message,'err');
+    document.getElementById('p3-before').style.display='block';
+  }finally{ document.getElementById('btn-gen').disabled=false; }
+}
+
+function renderThumbs(txt, d){
+  const ms=[...txt.matchAll(/【슬라이드\s*(\d+)】\s*(.+?)(?=【슬라이드|$)/gs)];
+  document.getElementById('slides-grid').innerHTML=ms.slice(0,9).map((m,i)=>{
+    const num=m[1], title=m[2].split('\n')[0].trim();
+    return i===0
+      ?`<div class="sthumb on"><div class="st-dark"><div class="st-num">${num}</div><div class="st-accent"></div><div class="st-h">${title}</div><div class="st-s">${d?.customer||''}</div></div></div>`
+      :`<div class="sthumb"><div class="st-light"><div class="st-num">${num}</div><div class="st-lh">${title}</div><div class="st-lines"><div class="st-line" style="width:88%"></div><div class="st-line" style="width:72%"></div><div class="st-line" style="width:80%"></div><div class="st-line" style="width:60%"></div></div></div></div>`;
+  }).join('');
+}
+
+function resetPPT(){document.getElementById('p3-before').style.display='block';document.getElementById('p3-after').style.display='none';GSS.forEach(id=>setGS(id,''));pptTxt='';}
+function dlResult(){
+  if(!pptTxt)return;
+  const d=docs.find(x=>x.id===cid);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([pptTxt],{type:'text/plain;charset=utf-8'}));
+  a.download=`${d?.title||'report'}_PPT_${tod()}.txt`; a.click();
+  toast('다운로드!','ok');
+}
+function cpResult(){navigator.clipboard.writeText(pptTxt).then(()=>toast('복사됨','ok'));}
+
+// ── BACKUP ──
+function doExport(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(docs,null,2)],{type:'application/json'}));
+  a.download=`iscar-rs-${tod()}.json`; a.click(); toast('백업 완료','ok');
+}
+function doImport(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(!Array.isArray(imp))throw 0;
+      if(!confirm(`${imp.length}개 문서를 가져옵니다.`))return;
+      imp.forEach(d=>{if(!docs.find(x=>x.id===d.id))docs.push(d);});
+      sv(); renderSB(); toast(`${imp.length}개 복원 완료`,'ok');
+    }catch{toast('복원 실패','err');}
+  };
+  r.readAsText(f); e.target.value='';
+}
+
+function dl(ms){return new Promise(r=>setTimeout(r,ms));}
+function toast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+type;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
