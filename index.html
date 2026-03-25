@@ -6,7 +6,7 @@
 <title>ISCAR Report Studio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
+ 
 :root {
   --bg:      #111418;
   --surf:    #191d22;
@@ -17,22 +17,31 @@
   --text:    #dce3ec;
   --text2:   #8a97a8;
   --text3:   #4f5d6e;
-  --amber:   #f0a020;   /* 가공 테스트 */
-  --teal:    #2ab8b0;   /* 고객사 협의 */
-  --rose:    #e04060;   /* 불량·클레임 */
+  --amber:   #f0a020;
+  --teal:    #2ab8b0;
+  --rose:    #e04060;
   --ok:      #28b870;
   --ng:      #e04060;
   --wip:     #f0a020;
   --shadow:  0 2px 16px rgba(0,0,0,.4);
+  /* GoodNote paper colors */
+  --gn-paper:   #fdf9f0;
+  --gn-line:    #d4c9a8;
+  --gn-grid:    #e8dfc8;
+  --gn-ink:     #1a1a2e;
+  --gn-red:     #c0392b;
+  --gn-blue:    #2563eb;
+  --gn-amber:   #d97706;
+  --gn-border:  #b8a882;
 }
-
+ 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;overflow:hidden}
-
+ 
 /* ── SHELL ── */
 .app{display:grid;grid-template-rows:54px 1fr;grid-template-columns:230px 1fr;height:100vh}
-
+ 
 /* ── TOPBAR ── */
 .topbar{
   grid-column:1/-1;
@@ -45,7 +54,6 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--amber),var(--teal) 50%,var(--rose));
 }
-
 .brand{
   font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;
   letter-spacing:.1em;color:var(--text);margin-right:32px;
@@ -56,7 +64,6 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   color:var(--amber);border:1px solid var(--amber);padding:2px 6px;border-radius:2px;
   opacity:.8;
 }
-
 .tab-row{display:flex;flex:1}
 .tab{
   height:54px;padding:0 18px;display:flex;align-items:center;gap:8px;
@@ -72,9 +79,8 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   font-family:'JetBrains Mono',monospace;font-size:8px;flex-shrink:0;
 }
 .tab.done .tab-n{background:var(--ok);border-color:var(--ok);color:#000}
-
 .topbar-r{margin-left:auto;display:flex;gap:8px;align-items:center}
-
+ 
 /* ── SIDEBAR ── */
 .sidebar{
   background:var(--surf);border-right:1px solid var(--border);
@@ -99,11 +105,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .fchip.fm{border-color:var(--amber);color:var(--amber);background:rgba(240,160,32,.1)}
 .fchip.fc{border-color:var(--teal);color:var(--teal);background:rgba(42,184,176,.1)}
 .fchip.fr{border-color:var(--rose);color:var(--rose);background:rgba(224,64,96,.1)}
-
 .doc-list{flex:1;overflow-y:auto;padding:5px}
 .doc-list::-webkit-scrollbar{width:3px}
 .doc-list::-webkit-scrollbar-thumb{background:var(--border2)}
-
 .ditem{
   padding:9px 9px 9px 13px;border-radius:5px;cursor:pointer;
   border:1px solid transparent;margin-bottom:2px;transition:all .15s;position:relative;
@@ -113,26 +117,24 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .ditem-bar{position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:2px}
 .ditem-ttl{font-size:12px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ditem-meta{display:flex;gap:5px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)}
-
 .sticker{padding:2px 6px;border-radius:2px;font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700}
 .s-ok{background:rgba(40,184,112,.2);color:var(--ok)}
 .s-ng{background:rgba(224,64,96,.2);color:var(--ng)}
 .s-wip{background:rgba(240,160,32,.2);color:var(--wip)}
-
 .sb-foot{padding:8px;border-top:1px solid var(--border)}
-
+ 
 /* ── MAIN ── */
 .main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .panel{display:none;flex-direction:column;flex:1;overflow:hidden}
 .panel.on{display:flex}
-
+ 
 /* TOOLBAR */
 .tbar{
   background:var(--surf);border-bottom:1px solid var(--border);
   padding:9px 18px;display:flex;align-items:center;gap:9px;flex-shrink:0;
 }
 .tbar-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;flex:1}
-
+ 
 /* BUTTONS */
 .btn{
   display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
@@ -149,19 +151,18 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .btn-teal:hover{background:rgba(42,184,176,.25)}
 .btn-rose{background:rgba(224,64,96,.12);color:var(--rose);border:1px solid rgba(224,64,96,.25)}
 .btn-rose:hover{background:rgba(224,64,96,.2)}
-
+.btn-green{background:rgba(40,184,112,.15);color:var(--ok);border:1px solid rgba(40,184,112,.3)}
+.btn-green:hover{background:rgba(40,184,112,.25)}
+ 
 /* ── P1: UPLOAD ── */
 .p1-body{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
 .col-l{padding:20px;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:14px}
 .col-r{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
-
 .sec-lbl{
   font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;
   color:var(--text3);text-transform:uppercase;padding-bottom:8px;
   border-bottom:1px solid var(--border);margin-bottom:2px;
 }
-
-/* drop */
 .dropzone{
   border:2px dashed var(--border2);border-radius:9px;background:var(--surf);
   padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;
@@ -171,8 +172,6 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .dz-ttl{font-size:13px;font-weight:700;margin-bottom:3px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em}
 .dz-sub{font-size:11px;color:var(--text3)}
 .prev-img{width:100%;max-height:150px;object-fit:contain;border-radius:6px;border:1px solid var(--border);display:none}
-
-/* form */
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .f1{display:flex;flex-direction:column;gap:4px}
 .f1.full{grid-column:1/-1}
@@ -185,8 +184,6 @@ input,select,textarea{
 input:focus,select:focus,textarea:focus{border-color:var(--amber)}
 textarea{resize:vertical;min-height:70px}
 select option{background:var(--surf3)}
-
-/* cutting condition table */
 .ct-table-wrap{overflow-x:auto}
 .ct-table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px}
 .ct-table th{
@@ -195,9 +192,7 @@ select option{background:var(--surf3)}
   color:var(--text2);font-weight:500;border-bottom:1px solid var(--border2);
   white-space:nowrap;
 }
-.ct-table td{
-  padding:5px 4px;border-bottom:1px solid var(--border);vertical-align:middle;
-}
+.ct-table td{padding:5px 4px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .ct-table tr:last-child td{border-bottom:none}
 .ct-table td input{
   background:transparent;border:1px solid transparent;border-radius:3px;
@@ -208,80 +203,59 @@ select option{background:var(--surf3)}
   font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text2);
   padding:5px 8px;background:var(--surf2);white-space:nowrap;font-weight:500;
 }
-
-/* brand header cells */
 .th-brand{background:var(--surf3);text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;padding:8px;border-bottom:2px solid var(--border2)}
 .th-existing{color:var(--text2)}
 .th-iscar{color:var(--amber)}
-
-/* ai extract box */
 .ai-box{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:8px}
 .ai-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--amber);display:flex;align-items:center;gap:6px}
 .ai-spin{width:9px;height:9px;border:1.5px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* cost section */
 .cost-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .cost-card{background:var(--surf);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center}
 .cost-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 .cost-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700}
 .cost-unit{font-size:10px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace}
-.cost-save{color:var(--ok)}
-.cost-existing{color:var(--text2)}
-.cost-iscar{color:var(--amber)}
-
+ 
 /* ── P2: VIEW ── */
 .p2-body{flex:1;display:grid;grid-template-columns:1fr 260px;overflow:hidden}
 .p2-main{padding:24px;overflow-y:auto}
 .p2-side{border-left:1px solid var(--border);background:var(--surf);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
-
 .doc-big-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.04em;margin-bottom:10px;line-height:1.2}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
 .chip{padding:3px 10px;border-radius:3px;font-size:10px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);color:var(--text2)}
-
-/* info cards */
 .icard{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:14px;margin-bottom:10px}
 .icard-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
-
-/* machine/material grid */
 .mm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mm-item{background:var(--surf2);border-radius:5px;padding:9px 10px}
 .mm-key{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;margin-bottom:3px}
 .mm-val{font-size:12px;font-weight:600;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em}
-
-/* view cutting table */
 .view-ct-table{width:100%;border-collapse:collapse;font-size:11px}
 .view-ct-table th{background:var(--surf3);padding:7px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text2);font-weight:500;border:1px solid var(--border)}
 .view-ct-table td{padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px}
 .view-ct-table .row-key{text-align:left;background:var(--surf2);color:var(--text2);font-size:9px;letter-spacing:.06em;white-space:nowrap}
 .col-iscar{background:rgba(240,160,32,.06)}
 .col-iscar td{color:var(--amber)}
-
-/* cost summary */
 .cost-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .cs-item{background:var(--surf2);border-radius:6px;padding:10px;text-align:center}
 .cs-lbl{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:4px}
 .cs-val{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700}
-
+ 
 /* ── P3: PPT ── */
 .p3-body{flex:1;display:grid;grid-template-columns:1fr 280px;overflow:hidden}
 .p3-main{padding:22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
 .p3-side{border-left:1px solid var(--border);background:var(--surf);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
-
 .style-opts{display:flex;flex-direction:column;gap:6px}
 .sopt{border:1px solid var(--border);border-radius:6px;padding:11px 13px;cursor:pointer;transition:all .15s}
 .sopt:hover{border-color:var(--border2);background:var(--surf2)}
 .sopt.on{border-color:var(--amber);background:rgba(240,160,32,.07)}
 .sopt-ttl{font-size:12px;font-weight:600;margin-bottom:2px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.03em}
 .sopt-desc{font-size:10px;color:var(--text3)}
-
 .docchk-list{display:flex;flex-direction:column;gap:5px}
 .docchk{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;background:var(--surf);border:1px solid var(--border);cursor:pointer}
 .docchk input[type=checkbox]{width:12px;height:12px;accent-color:var(--amber);cursor:pointer;flex-shrink:0;background:transparent;border:none;padding:0}
 .dck-info{flex:1;min-width:0}
 .dck-ttl{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dck-sub{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
-
 .gen-steps{list-style:none;display:flex;flex-direction:column;gap:8px}
 .gs{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
 .gs.active{color:var(--text)}
@@ -290,7 +264,6 @@ select option{background:var(--surf3)}
 .gs.active .gd{background:var(--amber);animation:gp 1s infinite}
 .gs.done .gd{background:var(--ok)}
 @keyframes gp{0%,100%{opacity:1}50%{opacity:.2}}
-
 .slides-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .sthumb{aspect-ratio:16/9;border-radius:5px;overflow:hidden;position:relative;border:1px solid var(--border);cursor:pointer;transition:transform .15s}
 .sthumb:hover{transform:scale(1.03)}
@@ -304,23 +277,271 @@ select option{background:var(--surf3)}
 .st-lh{font-size:7px;font-weight:700;color:#111;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:4px;font-family:'Barlow Condensed',sans-serif}
 .st-lines{display:flex;flex-direction:column;gap:2px}
 .st-line{height:3px;background:#e0e0e0;border-radius:1px}
-
 .result-box{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.85;color:var(--text2);white-space:pre-wrap;max-height:340px;overflow-y:auto}
 .result-box::-webkit-scrollbar{width:3px}
 .result-box::-webkit-scrollbar-thumb{background:var(--border2)}
-
-/* sb label */
+ 
+/* ═══════════════════════════════════════════
+   ── P4: 주간업무보고 ──
+   ═══════════════════════════════════════════ */
+.p4-body{flex:1;display:grid;grid-template-columns:320px 1fr;overflow:hidden}
+ 
+/* LEFT: settings panel */
+.p4-left{
+  border-right:1px solid var(--border);background:var(--surf);
+  padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;
+}
+.p4-section-title{
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;
+  color:var(--amber);text-transform:uppercase;padding-bottom:7px;
+  border-bottom:1px solid var(--border);
+}
+ 
+/* week range picker */
+.week-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ 
+/* doc selector */
+.weekly-doclist{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto}
+.weekly-doclist::-webkit-scrollbar{width:3px}
+.weekly-doclist::-webkit-scrollbar-thumb{background:var(--border2)}
+.wdoc-item{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;
+  border-radius:5px;background:var(--surf2);border:1px solid var(--border);
+  cursor:pointer;transition:all .12s;
+}
+.wdoc-item:hover{border-color:var(--border2)}
+.wdoc-item.checked{border-color:var(--amber);background:rgba(240,160,32,.07)}
+.wdoc-item input[type=checkbox]{width:11px;height:11px;accent-color:var(--amber);cursor:pointer;flex-shrink:0;background:transparent;border:none;padding:0}
+.wdoc-label{flex:1;min-width:0}
+.wdoc-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wdoc-meta{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+ 
+/* extra activity area */
+.extra-acts{display:flex;flex-direction:column;gap:5px}
+.act-row{display:flex;gap:5px;align-items:center}
+.act-row input{flex:1}
+.act-del{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:4px;line-height:1;transition:color .12s}
+.act-del:hover{color:var(--rose)}
+ 
+/* RIGHT: preview */
+.p4-right{display:flex;flex-direction:column;overflow:hidden}
+.p4-preview-bar{
+  background:var(--surf);border-bottom:1px solid var(--border);
+  padding:10px 18px;display:flex;align-items:center;gap:9px;flex-shrink:0;
+}
+.p4-preview-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;flex:1;color:var(--text2)}
+.p4-preview-wrap{flex:1;overflow-y:auto;padding:20px;background:#e8e0d0}
+ 
+/* ── GOODNOTE TEMPLATE PAPER ── */
+.gn-sheet{
+  background:var(--gn-paper);
+  border-radius:4px;
+  box-shadow:0 4px 24px rgba(0,0,0,.35), 0 1px 4px rgba(0,0,0,.2);
+  overflow:hidden;
+  max-width:820px;
+  margin:0 auto;
+  position:relative;
+  font-family:'Noto Sans KR',sans-serif;
+}
+ 
+/* spiral binding simulation */
+.gn-spiral{
+  position:absolute;left:0;top:0;bottom:0;width:32px;
+  background:linear-gradient(90deg,#c9bfa8 0%,#e8dfc8 100%);
+  border-right:2px solid var(--gn-border);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:18px 0;
+  z-index:2;
+}
+.gn-ring{
+  width:22px;height:22px;border-radius:50%;
+  border:3px solid #8a7d65;
+  background:radial-gradient(circle at 35% 35%,#c0b09a,#8a7d65);
+  margin:0 auto;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.3);
+}
+ 
+/* page content area (offset from spiral) */
+.gn-content{
+  margin-left:32px;
+  padding:0;
+}
+ 
+/* header band */
+.gn-header{
+  background:linear-gradient(135deg,#c0392b 0%,#96281b 100%);
+  padding:14px 20px 14px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;
+}
+.gn-header::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#f0a020,#ffd700 50%,#f0a020);
+}
+.gn-logo{
+  font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;
+  color:#fff;letter-spacing:.1em;
+}
+.gn-logo span{color:#ffd700}
+.gn-header-meta{
+  text-align:right;font-size:10px;color:rgba(255,255,255,.8);
+  font-family:'JetBrains Mono',monospace;line-height:1.7;
+}
+ 
+/* lined paper effect */
+.gn-lined{
+  background-image:
+    repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      var(--gn-line) 27px,
+      var(--gn-line) 28px
+    );
+  background-size:100% 28px;
+}
+ 
+/* section heading band */
+.gn-sec{
+  background:linear-gradient(90deg,rgba(192,57,43,.12),transparent);
+  border-left:4px solid var(--gn-red);
+  padding:7px 20px 7px 16px;
+  font-size:12px;font-weight:700;color:var(--gn-ink);
+  letter-spacing:.04em;
+  margin-bottom:0;
+}
+.gn-sec-num{
+  display:inline-block;width:20px;height:20px;border-radius:50%;
+  background:var(--gn-red);color:#fff;
+  font-size:10px;font-weight:700;text-align:center;line-height:20px;
+  margin-right:7px;
+}
+ 
+/* report item card */
+.gn-item{
+  padding:12px 20px 14px 20px;
+  border-bottom:1px solid var(--gn-grid);
+  position:relative;
+}
+.gn-item:last-child{border-bottom:none}
+.gn-item-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:8px;gap:12px;
+}
+.gn-item-title{
+  font-size:12px;font-weight:700;color:var(--gn-ink);
+  line-height:1.4;flex:1;
+}
+.gn-badge{
+  padding:2px 8px;border-radius:2px;font-size:9px;
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  flex-shrink:0;
+}
+.gn-badge-ok{background:rgba(40,184,112,.15);color:#1a7a4a;border:1px solid rgba(40,184,112,.3)}
+.gn-badge-wip{background:rgba(217,119,6,.15);color:#92400e;border:1px solid rgba(217,119,6,.3)}
+.gn-badge-ng{background:rgba(192,57,43,.12);color:#92241e;border:1px solid rgba(192,57,43,.25)}
+ 
+/* info grid inside item */
+.gn-info-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;
+  margin-bottom:8px;
+}
+.gn-info-cell{display:flex;flex-direction:column;gap:1px}
+.gn-info-key{font-size:8.5px;color:#8a7d65;font-family:'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.gn-info-val{font-size:10px;color:var(--gn-ink);font-weight:600;line-height:1.3}
+ 
+/* cutting condition mini-table inside sheet */
+.gn-ct-wrap{overflow-x:auto;margin:6px 0 8px}
+.gn-ct-table{
+  border-collapse:collapse;font-size:9px;min-width:440px;width:100%;
+}
+.gn-ct-table th{
+  background:#e8dfc8;padding:4px 6px;
+  font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;
+  color:#5a4e3a;font-weight:600;border:1px solid var(--gn-border);
+  text-align:center;white-space:nowrap;
+}
+.gn-ct-table th.iscar-col{background:#fef3e2;color:#92400e}
+.gn-ct-table td{
+  padding:3px 6px;border:1px solid var(--gn-grid);
+  text-align:center;font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--gn-ink);
+}
+.gn-ct-table td.iscar-val{background:#fffbf3;color:#d97706;font-weight:600}
+.gn-ct-table td.row-lbl{text-align:left;background:#f5f0e8;color:#8a7d65;font-size:8px;letter-spacing:.05em;font-weight:600}
+ 
+/* summary / effect box */
+.gn-summary-box{
+  background:linear-gradient(135deg,#fef9f0,#fdf5e6);
+  border:1px solid #f0c97a;border-radius:4px;
+  padding:8px 12px;margin-top:7px;
+  font-size:10.5px;color:#5a3e00;line-height:1.7;
+}
+.gn-effect{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#fef3c7;border:1px solid #fcd34d;border-radius:3px;
+  padding:3px 9px;font-size:10px;font-weight:700;color:#92400e;
+  margin-top:5px;
+}
+ 
+/* cost comparison highlight */
+.gn-cost-row{
+  display:flex;gap:8px;margin:7px 0;
+}
+.gn-cost-chip{
+  flex:1;background:#f5f0e8;border:1px solid var(--gn-border);
+  border-radius:4px;padding:6px 10px;text-align:center;
+}
+.gn-cost-chip.highlight{background:#fef3e2;border-color:#f0c97a}
+.gn-cost-chip .lbl{font-size:8px;color:#8a7d65;font-family:'JetBrains Mono',monospace;margin-bottom:3px}
+.gn-cost-chip .val{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--gn-ink)}
+.gn-cost-chip.highlight .val{color:#d97706}
+ 
+/* notes area */
+.gn-notes-area{
+  background:rgba(255,255,255,.6);
+  border-top:2px dashed var(--gn-line);
+  padding:10px 20px;
+  min-height:60px;
+  font-size:10px;color:#8a7d65;font-style:italic;
+  line-height:1.8;
+}
+ 
+/* footer */
+.gn-footer{
+  background:#e8dfc8;border-top:2px solid var(--gn-border);
+  padding:7px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.gn-footer-l{font-size:9px;color:#8a7d65;font-family:'JetBrains Mono',monospace}
+.gn-footer-r{font-size:9px;color:#c0392b;font-family:'JetBrains Mono',monospace;font-weight:600}
+ 
+/* loading / empty states */
+.gn-loading{
+  padding:60px 20px;text-align:center;
+  color:#8a7d65;font-size:13px;
+}
+.gn-loading-icon{font-size:32px;margin-bottom:10px;opacity:.5;animation:gnpulse 1.5s ease-in-out infinite}
+@keyframes gnpulse{0%,100%{opacity:.5}50%{opacity:1}}
+.gn-ai-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,rgba(192,57,43,.1),rgba(240,160,32,.1));
+  border:1px solid rgba(192,57,43,.3);border-radius:3px;
+  padding:3px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;
+  color:var(--gn-red);margin-bottom:12px;
+}
+.gn-ai-spin{width:8px;height:8px;border:1.5px solid rgba(192,57,43,.3);border-top-color:var(--gn-red);border-radius:50%;animation:spin .7s linear infinite}
+ 
+/* Rings for spiral - responsive count */
+.gn-rings-wrap{display:flex;flex-direction:column;gap:0;height:100%;justify-content:space-evenly;padding:8px 0}
+ 
+/* misc */
 .sb-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase}
 hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
 .row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-
-/* empty */
 .empty{text-align:center;padding:60px 24px;color:var(--text3)}
 .ei{font-size:36px;margin-bottom:12px;opacity:.4}
 .et{font-size:15px;color:var(--text);font-weight:600;margin-bottom:5px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em}
 .es{font-size:12px;line-height:1.7;margin-bottom:16px}
-
-/* toast */
 .toast{position:fixed;bottom:20px;right:20px;z-index:999;padding:9px 16px;border-radius:5px;font-size:11px;display:none;gap:7px;align-items:center;font-family:'JetBrains Mono',monospace;box-shadow:0 6px 20px rgba(0,0,0,.5)}
 .toast.show{display:flex}
 .toast.ok{background:var(--ok);color:#000}
@@ -330,7 +551,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
 </head>
 <body>
 <div class="app">
-
+ 
 <!-- TOPBAR -->
 <header class="topbar">
   <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div></div>
@@ -338,6 +559,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
     <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>업로드</div>
     <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
     <div class="tab" id="t3" onclick="goP('p3')"><div class="tab-n">3</div>PPT 생성</div>
+    <div class="tab" id="t4" onclick="goP('p4')"><div class="tab-n">4</div>주간업무보고</div>
   </div>
   <div class="topbar-r">
     <button class="btn btn-ghost" style="color:var(--text3);border-color:var(--border)" onclick="doExport()">⬇ 백업</button>
@@ -345,7 +567,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
     <input type="file" id="imp" accept=".json" style="display:none" onchange="doImport(event)">
   </div>
 </header>
-
+ 
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sb-head">
@@ -362,10 +584,10 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
     <button class="btn btn-amber" style="width:100%;justify-content:center" onclick="newDoc()">+ 새 문서</button>
   </div>
 </aside>
-
+ 
 <!-- MAIN -->
 <div class="main">
-
+ 
   <!-- ══ P1: UPLOAD / EDIT ══ -->
   <div class="panel on" id="p1">
     <div class="tbar">
@@ -373,9 +595,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
       <button class="btn btn-ghost" onclick="cancelP1()">취소</button>
       <button class="btn btn-amber" id="btn-save" onclick="saveDoc()" disabled>저장 →</button>
     </div>
-
     <div class="p1-body">
-      <!-- LEFT -->
       <div class="col-l">
         <div class="sec-lbl">이미지 업로드</div>
         <div class="dropzone" id="dz"
@@ -387,7 +607,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
         </div>
         <input type="file" id="fi" accept="image/*" style="display:none" onchange="onFile(event)">
         <img id="prev" class="prev-img">
-
+ 
         <div class="sec-lbl">기본 정보</div>
         <div class="fg2">
           <div class="f1"><label>문서 제목 *</label><input id="f-title" placeholder="예: CTR Raptor Knuckle OP30 T20" oninput="chkSave()"></div>
@@ -409,12 +629,8 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
           <div class="f1"><label>고객사 / 현장</label><input id="f-cust" placeholder="예: CTR 대합공장, 효림산업"></div>
           <div class="f1"><label>담당자</label><input id="f-author" placeholder="이름"></div>
         </div>
-
-        <!-- 유형별 동적 섹션 -->
         <div id="dyn-section"></div>
       </div>
-
-      <!-- RIGHT -->
       <div class="col-r">
         <div class="sec-lbl">AI 텍스트 추출</div>
         <div class="ai-box">
@@ -424,8 +640,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
             <textarea id="f-extracted" style="min-height:130px" placeholder="AI가 굿노트에서 텍스트를 추출합니다..."></textarea>
           </div>
         </div>
-
-        <!-- 가공조건 테이블 (machine 유형 전용) -->
         <div id="ct-section">
           <div class="sec-lbl">절삭 조건 (Cutting Condition)</div>
           <div class="ct-table-wrap">
@@ -445,7 +659,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
               <tbody id="ct-body"></tbody>
             </table>
           </div>
-
           <div class="sec-lbl" style="margin-top:14px">원가 비교</div>
           <div class="cost-row">
             <div class="cost-card">
@@ -469,7 +682,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
             <input id="c-saving" placeholder="예: 1.6% 원가 절감, 공구비 800원→879.63원">
           </div>
         </div>
-
         <div class="f1">
           <label>요약 / 특이사항</label>
           <textarea id="f-summary" style="min-height:70px" placeholder="핵심 결론, 트러블, 다음 액션"></textarea>
@@ -477,7 +689,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
       </div>
     </div>
   </div>
-
+ 
   <!-- ══ P2: VIEW ══ -->
   <div class="panel" id="p2">
     <div class="tbar">
@@ -495,6 +707,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
         <button class="btn btn-ghost" style="justify-content:center" onclick="editDoc()">✏️ 편집</button>
         <button class="btn btn-ghost" style="justify-content:center" onclick="reExtract()">🔄 재추출</button>
         <button class="btn btn-teal" style="justify-content:center" onclick="goP('p3')">📊 PPT 생성</button>
+        <button class="btn btn-green" style="justify-content:center" onclick="goP('p4')">📋 주간보고</button>
         <hr class="d">
         <div class="sb-lbl">원본 이미지</div>
         <img id="p2-img" style="width:100%;border-radius:5px;border:1px solid var(--border);display:none">
@@ -502,7 +715,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
       </div>
     </div>
   </div>
-
+ 
   <!-- ══ P3: PPT ══ -->
   <div class="panel" id="p3">
     <div class="tbar">
@@ -536,7 +749,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
           </div>
         </div>
       </div>
-
       <div class="p3-side">
         <div class="sb-lbl">진행 상황</div>
         <ul class="gen-steps">
@@ -560,18 +772,94 @@ hr.d{border:none;border-top:1px solid var(--border);margin:10px 0}
       </div>
     </div>
   </div>
-
+ 
+  <!-- ══ P4: 주간업무보고 ══ -->
+  <div class="panel" id="p4">
+    <div class="tbar">
+      <div class="tbar-title">④ 주간 업무 보고서 자동 생성</div>
+      <button class="btn btn-ghost" onclick="resetWeekly()">🔄 초기화</button>
+      <button class="btn btn-ghost" onclick="cpWeekly()" id="btn-cp-weekly" disabled>📋 복사</button>
+      <button class="btn btn-ghost" onclick="dlWeekly()" id="btn-dl-weekly" disabled>⬇ 다운로드</button>
+      <button class="btn btn-amber" id="btn-gen-weekly" onclick="genWeekly()">🤖 AI 보고서 생성</button>
+    </div>
+    <div class="p4-body">
+ 
+      <!-- LEFT PANEL: settings -->
+      <div class="p4-left">
+        <div>
+          <div class="p4-section-title">기간 & 담당자</div>
+          <div class="week-grid" style="margin-top:10px">
+            <div class="f1"><label>보고 기간 (시작)</label><input type="date" id="w-from"></div>
+            <div class="f1"><label>보고 기간 (종료)</label><input type="date" id="w-to"></div>
+            <div class="f1"><label>담당자</label><input id="w-author" placeholder="예: 전가흥"></div>
+            <div class="f1"><label>주차</label><input id="w-week" placeholder="예: 11-12주차"></div>
+          </div>
+        </div>
+ 
+        <div>
+          <div class="p4-section-title">포함 문서 선택</div>
+          <div style="font-size:10px;color:var(--text3);margin:6px 0 8px;line-height:1.6">
+            보고서에 포함할 현장 기록을 선택하세요
+          </div>
+          <div class="weekly-doclist" id="w-doclist"></div>
+        </div>
+ 
+        <div>
+          <div class="p4-section-title">추가 업무 활동</div>
+          <div style="font-size:10px;color:var(--text3);margin:6px 0 8px;line-height:1.6">
+            문서로 기록되지 않은 활동을 직접 입력
+          </div>
+          <div class="extra-acts" id="extra-acts">
+            <div class="act-row">
+              <input placeholder="예: 내부 기술 교육 이수, 고객사 방문 예정 준비..." oninput="updateWeeklyPreview()">
+              <button class="act-del" onclick="delAct(this)">×</button>
+            </div>
+          </div>
+          <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:7px;font-size:11px" onclick="addAct()">+ 활동 추가</button>
+        </div>
+ 
+        <div>
+          <div class="p4-section-title">보고 스타일</div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
+            <div class="sopt on" data-ws="formal" onclick="pickWS(this)"><div class="sopt-ttl">📝 정규 보고</div><div class="sopt-desc">팀장·부서장 제출 · 표 형식 · 공식 문체</div></div>
+            <div class="sopt" data-ws="brief" onclick="pickWS(this)"><div class="sopt-ttl">⚡ 간결 요약</div><div class="sopt-desc">핵심만 · 불릿 포인트 · 빠른 공유용</div></div>
+          </div>
+        </div>
+ 
+        <div>
+          <div class="p4-section-title">추가 지시사항</div>
+          <textarea id="w-extra" style="min-height:55px;margin-top:8px" placeholder="예: 다음 주 예정 업무도 포함, 효과금액 강조..."></textarea>
+        </div>
+      </div>
+ 
+      <!-- RIGHT PANEL: preview -->
+      <div class="p4-right">
+        <div class="p4-preview-bar">
+          <div class="p4-preview-title">📋 굿노트 스타일 미리보기</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="w-status">문서를 선택하고 AI 생성을 눌러주세요</div>
+        </div>
+        <div class="p4-preview-wrap" id="p4-preview">
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#8a7d65;font-size:13px">
+            <div style="font-size:40px;opacity:.3">📓</div>
+            <div>좌측에서 설정 후 AI 생성을 눌러주세요</div>
+            <div style="font-size:11px;opacity:.7">저장된 현장 기록이 굿노트 형식의 주간보고서로 변환됩니다</div>
+          </div>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+ 
 </div><!-- main -->
 </div><!-- app -->
-
+ 
 <div class="toast" id="toast"></div>
-
+ 
 <script>
 // ── DATA ──────────────────────────────────────────────
 let docs = JSON.parse(localStorage.getItem('iscar-rs') || '[]');
-let cid = null, curFil = 'all', pptStyle = 'summary', pptTxt = '', img64 = null;
-
-// 절삭조건 테이블 행 정의 (실제 레포트 기준)
+let cid = null, curFil = 'all', pptStyle = 'summary', weeklyStyle = 'formal', pptTxt = '', weeklyTxt = '', img64 = null;
+ 
 const CT_ROWS = [
   {key:'brand',    label:'Brand'},
   {key:'holder',   label:'Holder'},
@@ -589,8 +877,7 @@ const CT_ROWS = [
   {key:'tl',       label:'Tool Life'},
   {key:'remark',   label:'Remark'},
 ];
-
-// 유형별 추가 필드
+ 
 const TYPE_EXTRA = {
   machine: [
     {id:'m-machine', label:'장비명 (Brand & Model)', placeholder:'예: HYUNDAI WIA F 600B'},
@@ -615,11 +902,11 @@ const TYPE_EXTRA = {
     {id:'cr-action',   label:'조치 사항', placeholder:'예: 재종 변경, Vc 감소'},
   ],
 };
-
+ 
 const TYPE_LBL = {machine:'⚙️ 가공테스트', client:'🤝 고객사협의', claim:'⚠️ 불량클레임'};
 const TYPE_COL = {machine:'var(--amber)', client:'var(--teal)', claim:'var(--rose)'};
 const RES_CLS  = {OK:'s-ok', NG:'s-ng', WIP:'s-wip'};
-
+ 
 // ── BOOT ──────────────────────────────────────────────
 (function(){
   document.getElementById('f-date').value = tod();
@@ -627,13 +914,20 @@ const RES_CLS  = {OK:'s-ok', NG:'s-ng', WIP:'s-wip'};
   renderDyn();
   renderSB();
   populateP3();
+  populateWeeklyDocs();
+  // set default week range (this week)
+  const now = new Date();
+  const mon = new Date(now); mon.setDate(now.getDate() - now.getDay() + 1);
+  const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+  document.getElementById('w-from').value = mon.toISOString().split('T')[0];
+  document.getElementById('w-to').value   = fri.toISOString().split('T')[0];
   if(docs.length){ cid = docs[docs.length-1].id; renderP2(cid); }
 })();
-
+ 
 function tod(){ return new Date().toISOString().split('T')[0]; }
 function sv() { localStorage.setItem('iscar-rs', JSON.stringify(docs)); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
-
+ 
 // ── CUTTING CONDITION TABLE ──
 function buildCTTable(){
   const tb = document.getElementById('ct-body');
@@ -647,7 +941,7 @@ function buildCTTable(){
     </tr>
   `).join('');
 }
-
+ 
 function getCTValues(){
   const obj = {};
   CT_ROWS.forEach(r => {
@@ -658,7 +952,7 @@ function getCTValues(){
   });
   return obj;
 }
-
+ 
 function setCTValues(data){
   if(!data) return;
   CT_ROWS.forEach(r => {
@@ -668,20 +962,19 @@ function setCTValues(data){
     });
   });
 }
-
+ 
 function clearCT(){
   CT_ROWS.forEach(r => ['eR','eF','iR','iF'].forEach(col => {
     const el = document.getElementById(`ct-${r.key}-${col}`);
     if(el) el.value = '';
   }));
 }
-
+ 
 // ── DYNAMIC FIELDS ──
 function renderDyn(){
   const type = document.getElementById('f-type').value;
   const show = type === 'machine';
   document.getElementById('ct-section').style.display = show ? '' : 'none';
-
   const fields = TYPE_EXTRA[type] || [];
   const col = TYPE_COL[type];
   document.getElementById('dyn-section').innerHTML = `
@@ -693,7 +986,7 @@ function renderDyn(){
     </div>
   `;
 }
-
+ 
 function getDynValues(){
   const type = document.getElementById('f-type').value;
   const obj = {};
@@ -703,7 +996,7 @@ function getDynValues(){
   });
   return obj;
 }
-
+ 
 function setDynValues(type, data){
   if(!data) return;
   (TYPE_EXTRA[type]||[]).forEach(f => {
@@ -711,16 +1004,17 @@ function setDynValues(type, data){
     if(el) el.value = data[f.id] || '';
   });
 }
-
+ 
 // ── PANELS ──
 function goP(id){
-  ['p1','p2','p3'].forEach((p,i) => {
+  ['p1','p2','p3','p4'].forEach((p,i) => {
     document.getElementById(p).classList.toggle('on', p===id);
     document.getElementById('t'+(i+1)).classList.toggle('on', p===id);
   });
   if(id==='p3'){ populateP3(); updSelInfo(); }
+  if(id==='p4'){ populateWeeklyDocs(); }
 }
-
+ 
 // ── SIDEBAR ──
 function setF(f, el){
   curFil = f;
@@ -728,7 +1022,7 @@ function setF(f, el){
   el.className = 'fchip f'+f[0];
   renderSB();
 }
-
+ 
 function renderSB(q=''){
   const el = document.getElementById('doc-list');
   let list = curFil==='all' ? docs : docs.filter(d=>d.type===curFil);
@@ -745,9 +1039,9 @@ function renderSB(q=''){
     </div>
   `).join('');
 }
-
+ 
 function selDoc(id){ cid=id; renderSB(); renderP2(id); goP('p2'); }
-
+ 
 // ── P1: NEW / SAVE ──
 function newDoc(){
   cid = null; img64 = null;
@@ -761,15 +1055,15 @@ function newDoc(){
   document.getElementById('btn-save').disabled = true;
   clearCT(); renderDyn(); renderSB(); goP('p1');
 }
-
+ 
 function cancelP1(){
   if(docs.length){ if(!cid) cid=docs[docs.length-1].id; renderP2(cid); goP('p2'); }
 }
-
+ 
 function chkSave(){
   document.getElementById('btn-save').disabled = !document.getElementById('f-title').value.trim();
 }
-
+ 
 function saveDoc(){
   const title = document.getElementById('f-title').value.trim();
   if(!title){ toast('제목을 입력하세요','err'); return; }
@@ -796,9 +1090,10 @@ function saveDoc(){
   sv(); cid=doc.id;
   document.getElementById('t1').classList.add('done');
   renderSB(); renderP2(doc.id); goP('p2');
+  populateWeeklyDocs();
   toast('저장 완료 ✓','ok');
 }
-
+ 
 // ── DROP ──
 function dzOver(e){e.preventDefault();document.getElementById('dz').classList.add('drag')}
 function dzLeave(){document.getElementById('dz').classList.remove('drag')}
@@ -813,7 +1108,7 @@ function loadImg(file){
   };
   r.readAsDataURL(file);
 }
-
+ 
 async function extractAndFill(b64url){
   const spin=document.getElementById('ai-spin'), lbl=document.getElementById('ai-lbl');
   spin.style.display='block'; lbl.textContent='AI 분석 중...';
@@ -831,8 +1126,7 @@ async function extractAndFill(b64url){
   "title": "문서 제목",
   "customer": "고객사명",
   "ct_table": {
-    "brand_eR": "기존Rough브랜드", "brand_eF": "기존Finish브랜드",
-    "brand_iR": "ISCAR Rough브랜드", "brand_iF": "ISCAR Finish브랜드",
+    "brand_eR": "", "brand_eF": "", "brand_iR": "", "brand_iF": "",
     "holder_eR": "", "holder_eF": "", "holder_iR": "", "holder_iF": "",
     "insert_eR": "", "insert_eF": "", "insert_iR": "", "insert_iF": "",
     "grade_eR": "", "grade_eF": "", "grade_iR": "", "grade_iF": "",
@@ -848,14 +1142,8 @@ async function extractAndFill(b64url){
     "tl_eR": "", "tl_eF": "", "tl_iR": "", "tl_iF": "",
     "remark_eR": "", "remark_eF": "", "remark_iR": "", "remark_iF": ""
   },
-  "ct_old": "기존 총 C/T(sec)",
-  "ct_new": "ISCAR 총 C/T(sec)",
-  "cpp": "개당 공구비",
-  "saving": "원가 절감율 또는 금액",
-  "machine": "장비명",
-  "material": "피삭재",
-  "part": "부품명",
-  "summary": "핵심 결과 요약"
+  "ct_old": "", "ct_new": "", "cpp": "", "saving": "",
+  "machine": "", "material": "", "part": "", "summary": ""
 }
 JSON이 있으면 \`\`\`json ... \`\`\` 블록으로 먼저 출력하고, 그 다음에 전체 텍스트를 출력하세요.`}
         ]}]
@@ -863,15 +1151,11 @@ JSON이 있으면 \`\`\`json ... \`\`\` 블록으로 먼저 출력하고, 그 �
     });
     const data=await res.json();
     const raw=data.content?.[0]?.text||'';
-
-    // JSON 파싱 시도
     const jsonMatch=raw.match(/```json\s*([\s\S]*?)```/);
     if(jsonMatch){
       try{
         const j=JSON.parse(jsonMatch[1]);
-        if(j.title && !document.getElementById('f-title').value) {
-          document.getElementById('f-title').value=j.title; chkSave();
-        }
+        if(j.title && !document.getElementById('f-title').value) { document.getElementById('f-title').value=j.title; chkSave(); }
         if(j.customer) document.getElementById('f-cust').value=j.customer;
         if(j.ct_table) setCTValues(j.ct_table);
         if(j.ct_old)   document.getElementById('c-ct-old').value=j.ct_old;
@@ -879,14 +1163,12 @@ JSON이 있으면 \`\`\`json ... \`\`\` 블록으로 먼저 출력하고, 그 �
         if(j.cpp)      document.getElementById('c-cpp').value=j.cpp;
         if(j.saving)   document.getElementById('c-saving').value=j.saving;
         if(j.summary)  document.getElementById('f-summary').value=j.summary;
-        // machine fields
         if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}
         if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}
         if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}
         toast('절삭조건 테이블 자동 입력 완료 ✓','ok');
       }catch(e){}
     }
-    // 전체 텍스트
     const plainText=raw.replace(/```json[\s\S]*?```/,'').trim();
     document.getElementById('f-extracted').value=plainText;
     if(!document.getElementById('f-title').value && plainText){
@@ -899,23 +1181,19 @@ JSON이 있으면 \`\`\`json ... \`\`\` 블록으로 먼저 출력하고, 그 �
     toast('추출 실패: '+e.message,'err');
   }finally{ spin.style.display='none'; }
 }
-
+ 
 // ── P2: VIEW ──
 function renderP2(id){
   const d=docs.find(x=>x.id===id); if(!d) return;
   document.getElementById('p2-ttl').textContent=d.title;
   const col=TYPE_COL[d.type]||'var(--border)';
   const rc=RES_CLS[d.result]||'s-wip';
-
-  // dynamic fields display
   const allFields=[...Object.values(TYPE_EXTRA).flat()];
   const df=d.dynFields||{};
   const dynItems=Object.entries(df).filter(([,v])=>v).map(([k,v])=>{
     const fd=allFields.find(f=>f.id===k);
     return `<div class="mm-item"><div class="mm-key">${fd?.label||k}</div><div class="mm-val" style="font-size:11px;font-weight:500">${v}</div></div>`;
   }).join('');
-
-  // cutting condition table for view
   let ctHTML='';
   if(d.type==='machine' && d.ctData){
     const cd=d.ctData;
@@ -957,7 +1235,6 @@ function renderP2(id){
       </div>`;
     }
   }
-
   document.getElementById('p2-main').innerHTML=`
     <div style="height:3px;border-radius:2px;background:${col};margin-bottom:16px"></div>
     <div class="doc-big-title">${d.title}</div>
@@ -974,11 +1251,10 @@ function renderP2(id){
     ${d.extracted?`<div class="icard"><div class="icard-lbl">추출된 원문</div><div style="font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text2)">${d.extracted}</div></div>`:''}
     ${!d.summary&&!d.extracted&&!dynItems?`<div class="empty"><div class="ei">📝</div><div class="et">내용 없음</div><button class="btn btn-amber" onclick="editDoc()">✏️ 편집</button></div>`:''}
   `;
-
   if(d.image){document.getElementById('p2-img').src=d.image;document.getElementById('p2-img').style.display='block';document.getElementById('p2-noimg').style.display='none';}
   else{document.getElementById('p2-img').style.display='none';document.getElementById('p2-noimg').style.display='block';}
 }
-
+ 
 function editDoc(){
   const d=docs.find(x=>x.id===cid); if(!d) return;
   img64=d.image||null;
@@ -1000,24 +1276,25 @@ function editDoc(){
   document.getElementById('btn-save').disabled=false;
   goP('p1');
 }
-
+ 
 async function reExtract(){
   const d=docs.find(x=>x.id===cid);
   if(!d||!d.image){toast('이미지가 없습니다','err');return;}
   editDoc(); await extractAndFill(d.image);
 }
-
+ 
 function delDoc(){
   if(!cid||!confirm('정말 삭제하시겠습니까?')) return;
   docs=docs.filter(d=>d.id!==cid); sv(); cid=null; renderSB();
   if(docs.length){cid=docs[docs.length-1].id;renderP2(cid);}
   else document.getElementById('p2-main').innerHTML=`<div class="empty"><div class="ei">📂</div><div class="et">문서를 선택하세요</div><button class="btn btn-amber" onclick="newDoc()">+ 새 문서</button></div>`;
+  populateWeeklyDocs();
   toast('삭제 완료','ok');
 }
-
+ 
 // ── P3: PPT ──
 function pickS(el){document.querySelectorAll('.sopt').forEach(s=>s.classList.remove('on'));el.classList.add('on');pptStyle=el.dataset.s;}
-
+ 
 function populateP3(){
   const el=document.getElementById('p3-docs');if(!el)return;
   if(!docs.length){el.innerHTML=`<div style="font-size:11px;color:var(--text3)">저장된 문서가 없습니다.</div>`;return;}
@@ -1033,36 +1310,32 @@ function populateP3(){
   `).join('');
   document.querySelectorAll('#p3-docs input').forEach(i=>i.addEventListener('change',updSelInfo));
 }
-
+ 
 function updSelInfo(){
   const ids=[...document.querySelectorAll('#p3-docs input:checked')].map(i=>i.value);
   const el=document.getElementById('sel-info');
   el.innerHTML=ids.length?ids.map(id=>{const d=docs.find(x=>x.id===id);return d?`<div>· ${d.title}</div>`:''}).join(''):'<span style="color:var(--text3)">선택 없음</span>';
 }
-
+ 
 const GSS=['gs1','gs2','gs3','gs4'];
 function setGS(id,s){const el=document.getElementById(id);if(el)el.className='gs '+s;}
-
+ 
 async function genPPT(){
   const ids=[...document.querySelectorAll('#p3-docs input:checked')].map(i=>i.value);
   if(!ids.length){toast('문서를 선택하세요','err');return;}
   const sel=ids.map(id=>docs.find(d=>d.id===id)).filter(Boolean);
   const extra=document.getElementById('p3-extra').value;
-
   document.getElementById('p3-before').style.display='none';
   document.getElementById('p3-after').style.display='none';
   document.getElementById('btn-gen').disabled=true;
   GSS.forEach(id=>setGS(id,''));
-
   const styleLbl={
     summary:'영업·보고용 Summary (원가절감 강조, 고객사 제출, 5-6장)',
     technical:'기술 상세 Report (가공조건·수명 데이터 포함, 사내 기술 공유, 8-10장)',
     proposal:'개선 제안 Proposal (RE-TOOLING 제안, 비용 효과 강조, 6-8장)',
   };
-
   try{
     setGS('gs1','active'); await dl(500); setGS('gs1','done'); setGS('gs2','active');
-
     const allFields=[...Object.values(TYPE_EXTRA).flat()];
     const docBlocks=sel.map((d,i)=>{
       const df=d.dynFields||{};
@@ -1070,55 +1343,17 @@ async function genPPT(){
       const cd=d.ctData||{};
       const ctRows=CT_ROWS.filter(r=>cd[`${r.key}_iR`]||cd[`${r.key}_eR`])
         .map(r=>`  ${r.label}: 기존(R:${cd[`${r.key}_eR`]||'-'} F:${cd[`${r.key}_eF`]||'-'}) | ISCAR(R:${cd[`${r.key}_iR`]||'-'} F:${cd[`${r.key}_iF`]||'-'})`).join('\n');
-      return `
-[문서 ${i+1}] ${TYPE_LBL[d.type]}: ${d.title}
-날짜: ${d.date||'미입력'} | 결과: ${d.result} | 고객사: ${d.customer||'미입력'} | 담당자: ${d.author||'미입력'}
-${dynTxt}
-${ctRows?'[절삭 조건]\n'+ctRows:''}
-기존 C/T: ${d.ctOld||'미입력'}sec | ISCAR C/T: ${d.ctNew||'미입력'}sec | CPP: ${d.cpp||'미입력'}원
-원가 절감: ${d.saving||'미입력'}
-요약: ${d.summary||'미입력'}
-원문: ${(d.extracted||'').slice(0,400)}
-      `.trim();
+      return `[문서 ${i+1}] ${TYPE_LBL[d.type]}: ${d.title}\n날짜: ${d.date||'미입력'} | 결과: ${d.result} | 고객사: ${d.customer||'미입력'} | 담당자: ${d.author||'미입력'}\n${dynTxt}\n${ctRows?'[절삭 조건]\n'+ctRows:''}\n기존 C/T: ${d.ctOld||'미입력'}sec | ISCAR C/T: ${d.ctNew||'미입력'}sec | CPP: ${d.cpp||'미입력'}원\n원가 절감: ${d.saving||'미입력'}\n요약: ${d.summary||'미입력'}\n원문: ${(d.extracted||'').slice(0,400)}`.trim();
     }).join('\n\n---\n\n');
-
-    const prompt=`당신은 ISCAR 절삭공구 전문 기술영업 컨설턴트입니다.
-아래 절삭공구 업무 문서를 분석하여 ${styleLbl[pptStyle]} PPT 구성안을 한국어로 작성해주세요.
-${extra?`\n추가 요청: ${extra}\n`:''}
-
-=== 문서 ===
-${docBlocks}
-============
-
-다음 형식으로 작성하세요:
-
-【슬라이드 1】 제목 슬라이드
-[레이아웃] 다크 배경, 센터 정렬
-[메인 제목] ...
-[서브 제목] ...
-[하단] 고객사명 · 날짜 · ISCAR Korea
-
-【슬라이드 2】 개요 (Information)
-[레이아웃] 2단 구성 (Machine 정보 | Material 정보)
-[Machine] 장비명 / Spindle / 출력 / RPM
-[Material] 산업 / 부품명 / 피삭재 / 개선 공정
-
-슬라이드마다 [노트] 발표자 참고사항을 포함하세요.
-절삭조건 데이터가 있으면 반드시 표 형식으로 활용하세요.
-원가절감 수치(C/T 단축, CPP, %)는 크게 강조하세요.
-마지막에 [디자인 가이드] 색상·레이아웃 한 단락을 추가하세요.`;
-
+    const prompt=`당신은 ISCAR 절삭공구 전문 기술영업 컨설턴트입니다.\n아래 절삭공구 업무 문서를 분석하여 ${styleLbl[pptStyle]} PPT 구성안을 한국어로 작성해주세요.\n${extra?`\n추가 요청: ${extra}\n`:''}\n\n=== 문서 ===\n${docBlocks}\n============\n\n다음 형식으로 작성하세요:\n\n【슬라이드 1】 제목 슬라이드\n[레이아웃] 다크 배경, 센터 정렬\n[메인 제목] ...\n[서브 제목] ...\n[하단] 고객사명 · 날짜 · ISCAR Korea\n\n슬라이드마다 [노트] 발표자 참고사항을 포함하세요.\n절삭조건 데이터가 있으면 반드시 표 형식으로 활용하세요.\n원가절감 수치(C/T 단축, CPP, %)는 크게 강조하세요.\n마지막에 [디자인 가이드] 색상·레이아웃 한 단락을 추가하세요.`;
     setGS('gs2','done'); setGS('gs3','active');
-
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
     const data=await res.json();
     pptTxt=data.content?.[0]?.text||'생성 실패';
-
     setGS('gs3','done'); setGS('gs4','active'); await dl(400); setGS('gs4','done');
-
     document.getElementById('ppt-box').textContent=pptTxt;
     renderThumbs(pptTxt, sel[0]);
     document.getElementById('p3-after').style.display='block';
@@ -1129,7 +1364,7 @@ ${docBlocks}
     document.getElementById('p3-before').style.display='block';
   }finally{ document.getElementById('btn-gen').disabled=false; }
 }
-
+ 
 function renderThumbs(txt, d){
   const ms=[...txt.matchAll(/【슬라이드\s*(\d+)】\s*(.+?)(?=【슬라이드|$)/gs)];
   document.getElementById('slides-grid').innerHTML=ms.slice(0,9).map((m,i)=>{
@@ -1139,7 +1374,7 @@ function renderThumbs(txt, d){
       :`<div class="sthumb"><div class="st-light"><div class="st-num">${num}</div><div class="st-lh">${title}</div><div class="st-lines"><div class="st-line" style="width:88%"></div><div class="st-line" style="width:72%"></div><div class="st-line" style="width:80%"></div><div class="st-line" style="width:60%"></div></div></div></div>`;
   }).join('');
 }
-
+ 
 function resetPPT(){document.getElementById('p3-before').style.display='block';document.getElementById('p3-after').style.display='none';GSS.forEach(id=>setGS(id,''));pptTxt='';}
 function dlResult(){
   if(!pptTxt)return;
@@ -1150,7 +1385,416 @@ function dlResult(){
   toast('다운로드!','ok');
 }
 function cpResult(){navigator.clipboard.writeText(pptTxt).then(()=>toast('복사됨','ok'));}
-
+ 
+// ══════════════════════════════════════════════════════
+// ── P4: 주간업무보고 ──
+// ══════════════════════════════════════════════════════
+ 
+function populateWeeklyDocs(){
+  const el = document.getElementById('w-doclist');
+  if(!el) return;
+  if(!docs.length){
+    el.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:8px 0">저장된 문서가 없습니다</div>`;
+    return;
+  }
+  el.innerHTML = [...docs].reverse().map(d=>`
+    <div class="wdoc-item" id="wdi-${d.id}" onclick="toggleWDoc('${d.id}')">
+      <input type="checkbox" id="wchk-${d.id}" value="${d.id}" onchange="onWDocChk()">
+      <div class="wdoc-label">
+        <div class="wdoc-title">${TYPE_LBL[d.type]||'📄'} ${d.title}</div>
+        <div class="wdoc-meta">${d.date||'--'} ${d.customer?'· '+d.customer:''} <span class="sticker ${RES_CLS[d.result]||'s-wip'}" style="margin-left:3px">${d.result||'WIP'}</span></div>
+      </div>
+    </div>
+  `).join('');
+  // auto-select current doc
+  if(cid) { const cb=document.getElementById(`wchk-${cid}`); if(cb){cb.checked=true; document.getElementById(`wdi-${cid}`)?.classList.add('checked');} }
+}
+ 
+function toggleWDoc(id){
+  const cb = document.getElementById(`wchk-${id}`);
+  if(!cb) return;
+  cb.checked = !cb.checked;
+  document.getElementById(`wdi-${id}`)?.classList.toggle('checked', cb.checked);
+  onWDocChk();
+}
+ 
+function onWDocChk(){
+  // just update visual
+  document.querySelectorAll('.wdoc-item').forEach(el=>{
+    const cb = el.querySelector('input[type=checkbox]');
+    el.classList.toggle('checked', cb?.checked||false);
+  });
+}
+ 
+function pickWS(el){
+  document.querySelectorAll('[data-ws]').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  weeklyStyle = el.dataset.ws;
+}
+ 
+function addAct(){
+  const wrap = document.getElementById('extra-acts');
+  const row = document.createElement('div');
+  row.className = 'act-row';
+  row.innerHTML = `<input placeholder="활동 내용..." oninput="updateWeeklyPreview()"><button class="act-del" onclick="delAct(this)">×</button>`;
+  wrap.appendChild(row);
+}
+ 
+function delAct(btn){
+  const wrap = document.getElementById('extra-acts');
+  if(wrap.children.length > 1) btn.parentElement.remove();
+  else btn.previousElementSibling.value = '';
+}
+ 
+function updateWeeklyPreview(){ /* called on input change, no-op until full gen */ }
+ 
+function getSelectedWeeklyDocs(){
+  return [...document.querySelectorAll('#w-doclist input[type=checkbox]:checked')]
+    .map(cb => docs.find(d=>d.id===cb.value))
+    .filter(Boolean);
+}
+ 
+function getExtraActs(){
+  return [...document.querySelectorAll('#extra-acts input')]
+    .map(i=>i.value.trim()).filter(Boolean);
+}
+ 
+function resetWeekly(){
+  weeklyTxt = '';
+  document.getElementById('p4-preview').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#8a7d65;font-size:13px">
+      <div style="font-size:40px;opacity:.3">📓</div>
+      <div>좌측에서 설정 후 AI 생성을 눌러주세요</div>
+      <div style="font-size:11px;opacity:.7">저장된 현장 기록이 굿노트 형식의 주간보고서로 변환됩니다</div>
+    </div>`;
+  document.getElementById('w-status').textContent = '문서를 선택하고 AI 생성을 눌러주세요';
+  document.getElementById('btn-cp-weekly').disabled = true;
+  document.getElementById('btn-dl-weekly').disabled = true;
+  toast('초기화 완료','ok');
+}
+ 
+async function genWeekly(){
+  const selDocs = getSelectedWeeklyDocs();
+  const extraActs = getExtraActs();
+  if(!selDocs.length && !extraActs.length){ toast('문서를 선택하거나 활동을 입력하세요','err'); return; }
+ 
+  const from = document.getElementById('w-from').value;
+  const to   = document.getElementById('w-to').value;
+  const author = document.getElementById('w-author').value || '담당자';
+  const week  = document.getElementById('w-week').value || '';
+  const extra = document.getElementById('w-extra').value;
+  const isFormal = weeklyStyle === 'formal';
+ 
+  // show loading state on preview
+  document.getElementById('p4-preview').innerHTML = buildGnLoading();
+  document.getElementById('w-status').textContent = 'AI 분석 중...';
+  document.getElementById('btn-gen-weekly').disabled = true;
+ 
+  try{
+    // Build data payload for AI
+    const allFields=[...Object.values(TYPE_EXTRA).flat()];
+    const docBlocks = selDocs.map((d,i)=>{
+      const df=d.dynFields||{};
+      const dynTxt=Object.entries(df).filter(([,v])=>v)
+        .map(([k,v])=>{const f=allFields.find(x=>x.id===k);return `  ${f?.label||k}: ${v}`;}).join('\n');
+      const cd=d.ctData||{};
+      const ctRows=CT_ROWS.filter(r=>cd[`${r.key}_iR`]||cd[`${r.key}_eR`])
+        .map(r=>`  ${r.label}: 기존(R:${cd[`${r.key}_eR`]||'-'} F:${cd[`${r.key}_eF`]||'-'}) | ISCAR(R:${cd[`${r.key}_iR`]||'-'} F:${cd[`${r.key}_iF`]||'-'})`).join('\n');
+      return `[항목 ${i+1}]
+유형: ${TYPE_LBL[d.type]} | 제목: ${d.title}
+날짜: ${d.date||'-'} | 고객사: ${d.customer||'-'} | 결과: ${d.result}
+${dynTxt}
+${ctRows?'절삭조건:\n'+ctRows:''}
+기존 C/T: ${d.ctOld||'-'}sec | ISCAR C/T: ${d.ctNew||'-'}sec | CPP: ${d.cpp||'-'}원
+효과금액/절감: ${d.saving||'-'}
+요약: ${d.summary||d.extracted?.slice(0,300)||'-'}`.trim();
+    }).join('\n\n---\n\n');
+ 
+    const extraTxt = extraActs.length ? `\n추가 활동:\n${extraActs.map((a,i)=>`${i+1}. ${a}`).join('\n')}` : '';
+ 
+    const prompt = `당신은 ISCAR 절삭공구 기술영업 담당자입니다.
+아래 현장 기록 데이터를 분석하여 주간 업무 보고서 내용을 JSON으로 출력하세요.
+ 
+기간: ${from||'-'} ~ ${to||'-'} ${week?`(${week})`:''}
+담당자: ${author}
+보고 스타일: ${isFormal?'정규 보고 (공식 문체, 표 형식, 상세)':'간결 요약 (핵심 포인트, 짧게)'}
+${extra?`추가 요청: ${extra}`:''}
+ 
+=== 현장 기록 ===
+${docBlocks||'(문서 없음)'}
+${extraTxt}
+=================
+ 
+다음 JSON 형식으로만 출력하세요 (백틱/마크다운 없이 순수 JSON):
+{
+  "period": "보고 기간 텍스트",
+  "author": "담당자명",
+  "week": "주차",
+  "summary": "이번 주 핵심 한 줄 요약 (30자 이내)",
+  "items": [
+    {
+      "seq": 1,
+      "title": "항목 제목",
+      "customer": "고객사명",
+      "type": "machine|client|claim|other",
+      "result": "OK|NG|WIP",
+      "machine": "장비명 (가공 테스트인 경우)",
+      "material": "피삭재",
+      "part": "부품명",
+      "existing_tool": "기존 공구 설명",
+      "iscar_tool": "ISCAR 공구 설명",
+      "cutting_data": {
+        "rows": [
+          {"label":"Brand","existing":"기존값","iscar":"ISCAR값"},
+          {"label":"Holder","existing":"","iscar":""},
+          {"label":"Insert","existing":"","iscar":""},
+          {"label":"Vc (m/min)","existing":"","iscar":""},
+          {"label":"N (RPM)","existing":"","iscar":""},
+          {"label":"fz (mm/tooth)","existing":"","iscar":""},
+          {"label":"F (mm/min)","existing":"","iscar":""},
+          {"label":"Ap (mm)","existing":"","iscar":""},
+          {"label":"Ae (mm)","existing":"","iscar":""},
+          {"label":"Tool Life","existing":"","iscar":""}
+        ],
+        "ct_old": "기존 C/T (sec)",
+        "ct_new": "ISCAR C/T (sec)",
+        "cpp": "CPP (원)"
+      },
+      "effect": "효과금액 또는 절감 내용",
+      "details": "업무 내용 상세 설명 (3-5문장)",
+      "next_action": "다음 액션 또는 일정"
+    }
+  ],
+  "extra_activities": ["추가 활동1", "추가 활동2"],
+  "notes": "특이사항 또는 다음 주 예정 한 두 줄"
+}
+ 
+cutting_data는 가공 테스트 유형(type=machine)인 항목에만 포함하고, 나머지는 null로 설정하세요.
+데이터가 없는 필드는 빈 문자열("")로 두세요. 오직 JSON만 출력하세요.`;
+ 
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1000,
+        messages:[{role:'user', content: prompt}]
+      })
+    });
+    const data = await res.json();
+    let raw = (data.content?.[0]?.text || '{}').trim();
+    // strip possible code fences
+    raw = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+    raw = raw.replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+ 
+    let report;
+    try { report = JSON.parse(raw); }
+    catch(e){ throw new Error('JSON 파싱 실패: ' + e.message); }
+ 
+    weeklyTxt = buildWeeklyText(report);
+    renderGnSheet(report);
+    document.getElementById('w-status').textContent = `생성 완료 — ${(report.items||[]).length}개 항목`;
+    document.getElementById('btn-cp-weekly').disabled = false;
+    document.getElementById('btn-dl-weekly').disabled = false;
+    document.getElementById('t4').classList.add('done');
+    toast('주간보고서 생성 완료!','ok');
+  }catch(e){
+    document.getElementById('p4-preview').innerHTML = `<div style="padding:40px;text-align:center;color:#c0392b;font-size:13px">생성 실패: ${e.message}<br><br><button class="btn btn-ghost" onclick="resetWeekly()">초기화</button></div>`;
+    document.getElementById('w-status').textContent = '생성 실패';
+    toast('생성 실패: '+e.message,'err');
+  }finally{
+    document.getElementById('btn-gen-weekly').disabled = false;
+  }
+}
+ 
+function buildGnLoading(){
+  return `<div class="gn-sheet" style="max-width:820px;margin:0 auto;background:#fdf9f0;border-radius:4px;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div class="gn-loading">
+      <div class="gn-ai-badge"><div class="gn-ai-spin"></div> AI 분석 중</div>
+      <div class="gn-loading-icon">📝</div>
+      <div>현장 기록을 분석하여 보고서를 생성하고 있습니다...</div>
+      <div style="font-size:11px;margin-top:8px;opacity:.6">잠시만 기다려 주세요</div>
+    </div>
+  </div>`;
+}
+ 
+function badgeClass(result){
+  if(result==='OK') return 'gn-badge-ok';
+  if(result==='NG') return 'gn-badge-ng';
+  return 'gn-badge-wip';
+}
+ 
+function renderGnSheet(report){
+  const items = report.items || [];
+  const from = document.getElementById('w-from').value;
+  const to   = document.getElementById('w-to').value;
+ 
+  // Build spiral rings (one per ~60px of content - estimate ~18 for a normal report)
+  const ringCount = Math.max(10, Math.min(28, 10 + items.length * 3));
+  const rings = Array.from({length:ringCount},()=>`<div class="gn-ring"></div>`).join('');
+ 
+  let html = `
+  <div class="gn-sheet">
+    <div class="gn-spiral">
+      <div class="gn-rings-wrap">${rings}</div>
+    </div>
+    <div class="gn-content">
+      <!-- HEADER -->
+      <div class="gn-header">
+        <div>
+          <div class="gn-logo">⚙ IS<span>CAR</span> Korea</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.75);margin-top:3px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em">기술사원 업무 현황</div>
+        </div>
+        <div class="gn-header-meta">
+          <div>${report.week||''}</div>
+          <div>${from||''}${to&&from!==to?' ~ '+to:''}</div>
+          <div>담당: ${report.author||''}</div>
+        </div>
+      </div>
+ 
+      <!-- SUMMARY BAND -->
+      ${report.summary?`
+      <div style="background:#fdf5e6;border-bottom:1px solid #f0c97a;padding:8px 20px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:#d97706;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap">이번 주 요약</div>
+        <div style="font-size:11px;font-weight:700;color:#1a1a2e">${report.summary}</div>
+      </div>`:''}
+  `;
+ 
+  // ITEMS
+  items.forEach((item, idx) => {
+    const hasCtData = item.cutting_data && item.cutting_data.rows && item.cutting_data.rows.some(r=>r.existing||r.iscar);
+    const ctRows = hasCtData ? item.cutting_data.rows.filter(r=>r.existing||r.iscar) : [];
+ 
+    html += `
+      <div class="gn-sec gn-lined">
+        <span class="gn-sec-num">${item.seq||idx+1}</span>
+        ${item.customer?`${item.customer} — `:''}${TYPE_LBL[item.type]||'업무'}
+      </div>
+ 
+      <div class="gn-item gn-lined">
+        <div class="gn-item-header">
+          <div class="gn-item-title">${item.title||''}</div>
+          <span class="gn-badge ${badgeClass(item.result)}">${item.result||'WIP'}</span>
+        </div>
+ 
+        ${(item.machine||item.material||item.part||item.customer)?`
+        <div class="gn-info-grid" style="margin-bottom:10px">
+          ${item.machine?`<div class="gn-info-cell"><div class="gn-info-key">장비</div><div class="gn-info-val">${item.machine}</div></div>`:''}
+          ${item.material?`<div class="gn-info-cell"><div class="gn-info-key">피삭재</div><div class="gn-info-val">${item.material}</div></div>`:''}
+          ${item.part?`<div class="gn-info-cell"><div class="gn-info-key">부품</div><div class="gn-info-val">${item.part}</div></div>`:''}
+        </div>`:''}
+ 
+        ${item.details?`<div style="font-size:11px;color:#1a1a2e;line-height:1.75;margin-bottom:10px;white-space:pre-wrap">${item.details}</div>`:''}
+ 
+        ${ctRows.length?`
+        <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:#8a7d65;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">절삭조건 비교</div>
+        <div class="gn-ct-wrap">
+          <table class="gn-ct-table">
+            <thead>
+              <tr>
+                <th style="width:90px;text-align:left">항목</th>
+                <th>기존 (LOCAL)</th>
+                <th class="iscar-col">ISCAR</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ctRows.map(r=>`
+                <tr>
+                  <td class="row-lbl">${r.label}</td>
+                  <td>${r.existing||'-'}</td>
+                  <td class="iscar-val">${r.iscar||'-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${(item.cutting_data?.ct_old||item.cutting_data?.ct_new||item.cutting_data?.cpp)?`
+        <div class="gn-cost-row">
+          ${item.cutting_data.ct_old?`<div class="gn-cost-chip"><div class="lbl">기존 C/T</div><div class="val">${item.cutting_data.ct_old}s</div></div>`:''}
+          ${item.cutting_data.ct_new?`<div class="gn-cost-chip highlight"><div class="lbl">ISCAR C/T</div><div class="val">${item.cutting_data.ct_new}s</div></div>`:''}
+          ${item.cutting_data.cpp?`<div class="gn-cost-chip"><div class="lbl">CPP</div><div class="val">${item.cutting_data.cpp}원</div></div>`:''}
+        </div>`:''}
+        `:''}
+ 
+        ${item.effect?`<div class="gn-effect">💰 효과금액: ${item.effect}</div>`:''}
+        ${item.next_action?`<div style="font-size:10px;color:#5a4e3a;margin-top:8px;background:#f5f0e8;border-left:3px solid #d97706;padding:5px 10px;border-radius:0 3px 3px 0">▶ 다음 액션: ${item.next_action}</div>`:''}
+      </div>
+    `;
+  });
+ 
+  // Extra activities
+  const extras = report.extra_activities || [];
+  if(extras.length){
+    html += `
+      <div class="gn-sec gn-lined">
+        <span class="gn-sec-num" style="background:#2563eb">${items.length+1}</span>
+        기타 업무 활동
+      </div>
+      <div class="gn-item gn-lined">
+        ${extras.map(a=>`<div style="font-size:11px;color:#1a1a2e;padding:4px 0;border-bottom:1px dashed #e8dfc8;display:flex;align-items:flex-start;gap:8px"><span style="color:#2563eb;font-weight:700;flex-shrink:0">▸</span>${a}</div>`).join('')}
+      </div>
+    `;
+  }
+ 
+  // Notes
+  if(report.notes){
+    html += `
+      <div class="gn-notes-area">
+        <div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:#b8a882;text-transform:uppercase;margin-bottom:5px">특이사항 / 다음 주 예정</div>
+        ${report.notes}
+      </div>
+    `;
+  }
+ 
+  // Footer
+  html += `
+      <div class="gn-footer">
+        <div class="gn-footer-l">ISCAR Korea · 기술사원 주간보고 · ${report.author||''}</div>
+        <div class="gn-footer-r">${from||''}${to&&from!==to?' ~ '+to:''}</div>
+      </div>
+    </div>
+  </div>`;
+ 
+  document.getElementById('p4-preview').innerHTML = html;
+}
+ 
+function buildWeeklyText(report){
+  const from = document.getElementById('w-from').value;
+  const to   = document.getElementById('w-to').value;
+  const items = report.items || [];
+  let txt = `기술사원 업무 현황 ${report.week||''}\n`;
+  txt += `기간: ${from} ~ ${to} | 담당: ${report.author||''}\n`;
+  txt += `핵심요약: ${report.summary||''}\n\n`;
+  txt += '═'.repeat(60) + '\n\n';
+  items.forEach((item,i)=>{
+    txt += `${i+1}) ${item.customer||''} — ${item.title}\n`;
+    if(item.machine) txt += `   장비: ${item.machine}\n`;
+    if(item.material) txt += `   피삭재: ${item.material}\n`;
+    if(item.part) txt += `   부품: ${item.part}\n`;
+    txt += `   결과: ${item.result||'-'}\n`;
+    if(item.details) txt += `   내용: ${item.details}\n`;
+    if(item.effect) txt += `   ★ 효과금액: ${item.effect}\n`;
+    if(item.next_action) txt += `   ▶ 다음 액션: ${item.next_action}\n`;
+    txt += '\n';
+  });
+  if((report.extra_activities||[]).length){
+    txt += '기타 업무 활동\n';
+    report.extra_activities.forEach(a => txt += `  ▸ ${a}\n`);
+    txt += '\n';
+  }
+  if(report.notes) txt += `특이사항: ${report.notes}\n`;
+  return txt;
+}
+ 
+function cpWeekly(){ if(weeklyTxt) navigator.clipboard.writeText(weeklyTxt).then(()=>toast('복사됨','ok')); }
+function dlWeekly(){
+  if(!weeklyTxt) return;
+  const week = document.getElementById('w-week').value || tod();
+  const author = document.getElementById('w-author').value || '담당자';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([weeklyTxt],{type:'text/plain;charset=utf-8'}));
+  a.download = `주간업무보고_${author}_${week}.txt`;
+  a.click(); toast('다운로드!','ok');
+}
+ 
 // ── BACKUP ──
 function doExport(){
   const a=document.createElement('a');
@@ -1166,12 +1810,12 @@ function doImport(e){
       if(!Array.isArray(imp))throw 0;
       if(!confirm(`${imp.length}개 문서를 가져옵니다.`))return;
       imp.forEach(d=>{if(!docs.find(x=>x.id===d.id))docs.push(d);});
-      sv(); renderSB(); toast(`${imp.length}개 복원 완료`,'ok');
+      sv(); renderSB(); populateWeeklyDocs(); toast(`${imp.length}개 복원 완료`,'ok');
     }catch{toast('복원 실패','err');}
   };
   r.readAsText(f); e.target.value='';
 }
-
+ 
 function dl(ms){return new Promise(r=>setTimeout(r,ms));}
 function toast(msg,type='info'){
   const el=document.getElementById('toast');
