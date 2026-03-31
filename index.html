@@ -980,7 +980,7 @@ JSON structure:
   ],
   "resultSummary":"full test result text as found in document, preserve Korean"
 }`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
     const data=await res.json();
     const raw=data.content.map(c=>c.text||'').join('');
     const clean=raw.replace(/```json|```/g,'').trim();
@@ -1286,7 +1286,7 @@ async function extractProp(b64url){
   const spin=document.getElementById('ai-spin-prop'),lbl=document.getElementById('ai-lbl-prop');spin.style.display='block';lbl.textContent='제안서 분석 중...';
   try{const b64=b64url.split(',')[1],mt=b64url.split(';')[0].split(':')[1];const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`이 제안서 이미지를 분석하세요. JSON 형식으로만 출력하세요 (백틱 없이):\n{"title":"","customer":"","prop_type":"tooling|retooling|process","tool":"","effect":"","summary":""}`}]}]);let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();try{const j=JSON.parse(clean);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.tool)document.getElementById('pr-tool').value=j.tool;if(j.effect)document.getElementById('pr-effect').value=j.effect;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.prop_type){curPropType=j.prop_type;document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');const pt=document.querySelector(`[data-pt="${j.prop_type}"]`);if(pt)pt.className='pt-btn on';}toast('제안서 분류 완료 ✓','ok');}catch(e){document.getElementById('f-prop-ext').value=raw.slice(0,1500);}lbl.textContent='분석 완료 ✓';}catch(e){lbl.textContent='분석 실패';toast('분석 실패: '+e.message,'err');}finally{spin.style.display='none';}
 }
-async function callAI(messages){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});const data=await res.json();return data.content?.[0]?.text||'';}
+async function callAI(messages){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});const data=await res.json();return data.content?.[0]?.text||'';}
 function saveDoc(){
   const title=document.getElementById('f-title').value.trim();if(!title){toast('제목을 입력하세요','err');return;}
   const cat=activeCat;
