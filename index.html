@@ -990,7 +990,7 @@ JSON structure:
     const raw=data.content.map(c=>c.text||'').join('');
     const clean=raw.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
-    const report={id:Date.now()+Math.random(),filename:file.name,uploadedAt:new Date().toISOString(),...parsed};
+    const report={id:Date.now()+Math.random(),filename:file.name,uploadedAt:new Date().toISOString(),pdfData:b64,...parsed};
     // Dedup
     const dup=dbReports.some(r=>r.customer===report.customer&&r.testDate===report.testDate&&r.material===report.material);
     if(dup){toast(`⚠️ 중복: ${report.customer||file.name}`,'info');}
@@ -1087,7 +1087,7 @@ function dbCardHTML(r){
     </div>
     <div class="db-footer">
       <div class="db-summary">${(r.resultSummary||'').slice(0,70)}${(r.resultSummary||'').length>70?'...':''}</div>
-      <button class="db-del" onclick="event.stopPropagation();dbDelete('${r.id}')">🗑</button>
+      ${r.pdfData?`<button class="db-del" onclick="event.stopPropagation();dbViewPDF('${r.id}')" style="color:var(--blue)" title="PDF 보기">📄</button>`:""}  <button class="db-del" onclick="event.stopPropagation();dbDelete('${r.id}')">🗑</button>
     </div>
   </div>`;
 }
@@ -1098,7 +1098,7 @@ function dbOpenDetail(id){
   const props=(r.proposals||[]).filter(p=>p.tool||p.insert||p.grade);
   const mbox=document.getElementById('db-mbox');
   mbox.innerHTML=`
-    <button class="db-mclose" onclick="dbCloseModal()">✕</button>
+    <button class="db-mclose" onclick="dbCloseModal()">✕</button>${r.pdfData?`<button onclick="dbViewPDF('${r.id}')" style="position:absolute;top:14px;right:50px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:5px;color:#60a5fa;padding:4px 10px;font-size:11px;cursor:pointer;">📄 PDF 보기</button>`:""}
     <div class="db-m-title">${r.customer||'고객사 미상'}</div>
     <div class="db-m-sub">${r.testDate||''} · ${r.filename||''} · Customer No. ${r.customerNo||'—'}</div>
     <div class="db-m-sec">
@@ -1139,7 +1139,7 @@ function dbOpenDetail(id){
   `;
   document.getElementById('db-modal').classList.add('on');
 }
-function dbCloseModal(){document.getElementById('db-modal').classList.remove('on');}
+function dbViewPDF(id){const r=dbReports.find(x=>String(x.id)===String(id));if(!r||!r.pdfData)return;const blob=new Blob([Uint8Array.from(atob(r.pdfData),c=>c.charCodeAt(0))],{type:"application/pdf"});const url=URL.createObjectURL(blob);window.open(url,"_blank");}function dbCloseModal(){document.getElementById('db-modal').classList.remove('on');}
 
 function dbDelete(id){
   if(!confirm('이 레포트를 삭제하시겠습니까?'))return;
