@@ -449,6 +449,11 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
     <div class="tab" id="t6" onclick="goP('p6')" style="color:#60a5fa"><div class="tab-n" style="border-color:#60a5fa">6</div>TEST DB</div>
   </div>
   <div class="tb-r">
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="font-size:8px;font-family:JetBrains Mono,monospace;color:var(--text3);white-space:nowrap">API KEY</div>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="saveApiKey(this.value)" style="width:140px;font-size:10px;padding:4px 7px;font-family:JetBrains Mono,monospace;background:var(--surf2);border:1px solid var(--border);border-radius:4px;color:var(--amber)">
+      <div id="api-key-status" style="font-size:9px;color:var(--text3)">●</div>
+    </div>
     <button class="btn btn-ghost btn-sm" onclick="doExport()">⬇ 백업</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('imp').click()">⬆ 복원</button>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="doImport(event)">
@@ -980,7 +985,7 @@ JSON structure:
   ],
   "resultSummary":"full test result text as found in document, preserve Korean"
 }`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
     const data=await res.json();
     const raw=data.content.map(c=>c.text||'').join('');
     const clean=raw.replace(/```json|```/g,'').trim();
@@ -1286,7 +1291,7 @@ async function extractProp(b64url){
   const spin=document.getElementById('ai-spin-prop'),lbl=document.getElementById('ai-lbl-prop');spin.style.display='block';lbl.textContent='제안서 분석 중...';
   try{const b64=b64url.split(',')[1],mt=b64url.split(';')[0].split(':')[1];const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`이 제안서 이미지를 분석하세요. JSON 형식으로만 출력하세요 (백틱 없이):\n{"title":"","customer":"","prop_type":"tooling|retooling|process","tool":"","effect":"","summary":""}`}]}]);let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();try{const j=JSON.parse(clean);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.tool)document.getElementById('pr-tool').value=j.tool;if(j.effect)document.getElementById('pr-effect').value=j.effect;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.prop_type){curPropType=j.prop_type;document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');const pt=document.querySelector(`[data-pt="${j.prop_type}"]`);if(pt)pt.className='pt-btn on';}toast('제안서 분류 완료 ✓','ok');}catch(e){document.getElementById('f-prop-ext').value=raw.slice(0,1500);}lbl.textContent='분석 완료 ✓';}catch(e){lbl.textContent='분석 실패';toast('분석 실패: '+e.message,'err');}finally{spin.style.display='none';}
 }
-async function callAI(messages){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});const data=await res.json();return data.content?.[0]?.text||'';}
+async function callAI(messages){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});const data=await res.json();return data.content?.[0]?.text||'';}
 function saveDoc(){
   const title=document.getElementById('f-title').value.trim();if(!title){toast('제목을 입력하세요','err');return;}
   const cat=activeCat;
@@ -1402,6 +1407,10 @@ function dlWeekly(){if(!weeklyTxt)return;const a=document.createElement('a');a.h
 function doExport(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(docs,null,2)],{type:'application/json'}));a.download=`iscar-rs4-${tod()}.json`;a.click();toast('백업 완료','ok');}
 function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!Array.isArray(imp))throw 0;if(!confirm(`${imp.length}개 가져옵니까?`))return;imp.forEach(d=>{if(!docs.find(x=>x.id===d.id))docs.push(d);});sv();renderSB();populateP3();populateWDocs();toast(`${imp.length}개 복원`,'ok');}catch{toast('복원 실패','err');}};r.readAsText(f);e.target.value='';}
 function toast(msg,type='info'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);}
+function getApiKey(){return localStorage.getItem('iscar-api-key')||'';}
+function saveApiKey(v){localStorage.setItem('iscar-api-key',v);const s=document.getElementById('api-key-status');if(s){if(v.startsWith('sk-ant-')){s.style.color='var(--ok)';s.textContent='✓';}else{s.style.color='var(--text3)';s.textContent='●';}}}
+// Init API key input on load
+window.addEventListener('DOMContentLoaded',()=>{const k=getApiKey();const inp=document.getElementById('api-key-input');if(inp&&k){inp.value=k;saveApiKey(k);}});
 </script>
 </body>
 </html>
