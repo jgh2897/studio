@@ -944,7 +944,8 @@ async function dbSave(){
   localStorage.setItem(DB_KEY,JSON.stringify(dbReports));
   try{
     let sha='';
-    const getRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{headers:{'Authorization':'token '+getGHToken(),'Accept':'application/vnd.github.v3+json'}});if(!res.ok&&!getGHToken())throw new Error('no token');
+    if(!getGHToken())throw new Error('no token');
+    const getRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{headers:{'Authorization':'token '+getGHToken(),'Accept':'application/vnd.github.v3+json'}});
     if(getRes.ok){const d=await getRes.json();sha=d.sha;}
     const saveData=dbReports.map(r=>{const {pdfData,...rest}=r;return rest;});
     const content=btoa(unescape(encodeURIComponent(JSON.stringify(saveData))));
@@ -1450,21 +1451,19 @@ function saveGHToken(v){
   if(s){if(v.startsWith('ghp_')){s.style.color='var(--ok)';s.textContent='✓ 설정됨';}else{s.style.color='var(--text3)';s.textContent='미설정';}}
 }
 async function dbSyncFromGH(){
-  const token=getGHToken();
-  if(!token){toast('GitHub Token을 먼저 입력하세요','err');return;}
   try{
-    const res=await fetch('https://api.github.com/repos/jgh2897/studio/contents/db.json',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
+    // Use raw GitHub URL - works in all browsers including Safari
+    const res=await fetch('https://raw.githubusercontent.com/jgh2897/studio/main/db.json?t='+Date.now());
     if(res.ok){
-      const data=await res.json();
-      const parsed=JSON.parse(atob(data.content.replace(/\n/g,'')));
+      const parsed=await res.json();
       if(Array.isArray(parsed)){
         let added=0;
         parsed.forEach(r=>{if(!dbReports.find(x=>x.id===r.id)){dbReports.push(r);added++;}});
         localStorage.setItem(DB_KEY,JSON.stringify(dbReports));
-        dbFilter();toast('☁️ '+added+'건 불러오기 완료','ok');
+        dbFilter();dbUpdateStats();toast('☁️ '+added+'건 불러오기 완료','ok');
       }
     } else {toast('GitHub에 저장된 데이터 없음','info');}
-  }catch(e){toast('불러오기 실패','err');}
+  }catch(e){toast('불러오기 실패: '+e.message,'err');}
 }
 function saveApiKey(v){localStorage.setItem('iscar-api-key',v);const s=document.getElementById('api-key-status');if(s){if(v.startsWith('sk-ant-')){s.style.color='var(--ok)';s.textContent='✓';}else{s.style.color='var(--text3)';s.textContent='●';}}}
 // Init API key and GH token inputs on load
