@@ -1153,11 +1153,13 @@ function dbCardHTML(r){
       ${lastProp?.grade?`<span class="db-tag" style="background:rgba(34,184,176,.08);color:var(--teal);border-color:rgba(34,184,176,.2)">${lastProp.grade}</span>`:''}
       ${r.testResult?`<span class="db-tag ${resClass}">${resIco} ${r.testResult}</span>`:''}
     </div>
-    <div class="db-conds">
-      <div class="db-ci"><div class="db-ck">Machine</div><div class="db-cv" style="font-size:9px">${r.machineBrand||'—'}</div></div>
-      <div class="db-ci"><div class="db-ck">Adaptation</div><div class="db-cv" style="font-size:9px">${r.adaptation||'—'}</div></div>
-      <div class="db-ci"><div class="db-ck">Proposals</div><div class="db-cv" style="color:var(--blue)">${props.length}</div></div>
+    <div class="db-conds" style="grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+      <div class="db-ci"><div class="db-ck">TYPE</div><div class="db-cv" style="font-size:9px">${r.machineType||'—'}</div></div>
+      <div class="db-ci"><div class="db-ck">BRAND & MODEL</div><div class="db-cv" style="font-size:9px">${r.machineBrand||'—'}</div></div>
+      <div class="db-ci"><div class="db-ck">ADAPTATION</div><div class="db-cv" style="font-size:9px">${r.adaptation||'—'}</div></div>
+      <div class="db-ci"><div class="db-ck">MAX. RPM</div><div class="db-cv" style="font-size:9px">${r.maxRPM||'—'}</div></div>
     </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--blue);margin-bottom:4px">PROPOSALS: ${props.length}</div>
     <div class="db-footer">
       <div class="db-summary">${(r.resultSummary||'').slice(0,70)}${(r.resultSummary||'').length>70?'...':''}</div>
       ${(r.pdfData||r.pdfGHPath)?`<button class="db-del" onclick="event.stopPropagation();dbViewPDF('${r.id}')" style="color:var(--blue)" title="PDF 보기">📄</button>`:""}  <button class="db-del" onclick="event.stopPropagation();dbDelete('${r.id}')">🗑</button>
