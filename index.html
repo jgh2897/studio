@@ -1123,7 +1123,7 @@ function dbCardHTML(r){
     </div>
     <div class="db-footer">
       <div class="db-summary">${(r.resultSummary||'').slice(0,70)}${(r.resultSummary||'').length>70?'...':''}</div>
-      ${r.pdfData?`<button class="db-del" onclick="event.stopPropagation();dbViewPDF('${r.id}')" style="color:var(--blue)" title="PDF 보기">📄</button>`:""}  <button class="db-del" onclick="event.stopPropagation();dbDelete('${r.id}')">🗑</button>
+      ${(r.pdfData||r.pdfGHPath)?`<button class="db-del" onclick="event.stopPropagation();dbViewPDF('${r.id}')" style="color:var(--blue)" title="PDF 보기">📄</button>`:""}  <button class="db-del" onclick="event.stopPropagation();dbDelete('${r.id}')">🗑</button>
     </div>
   </div>`;
 }
