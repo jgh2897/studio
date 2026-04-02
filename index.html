@@ -1030,7 +1030,7 @@ JSON structure:
     // Dedup
     const dup=dbReports.some(r=>r.customer===report.customer&&r.testDate===report.testDate&&r.material===report.material);
     if(dup){toast(`⚠️ 중복: ${report.customer||file.name}`,'info');}
-    else{dbReports.unshift(report);dbSave();dbSavePDF(report.id,b64,file.name);toast(`✅ 저장: ${report.customer||file.name}`,'ok');}
+    else{dbReports.unshift(report);await dbSave();await dbSavePDF(report.id,b64,file.name);toast(`✅ 저장: ${report.customer||file.name}`,'ok');}
   }catch(err){
     console.error(err);
     toast(`❌ 파싱 실패: ${file.name}`,'err');
