@@ -1134,26 +1134,29 @@ function dbCardHTML(r){
   const resClass=r.testResult==='Positive'?'db-tag-pos':'db-tag-neg';
   const resIco=r.testResult==='Positive'?'✅':'❌';
   const props=(r.proposals||[]).filter(p=>p.tool||p.insert||p.grade);
-  const inserts=[...new Set([r.actual,...props].map(p=>p?.insert).filter(Boolean))];
+  // Last proposal (final recommendation)
+  const lastProp=props[props.length-1]||null;
   return `<div class="db-card" onclick="dbOpenDetail('${r.id}')">
     <div class="db-card-top">
-      <div><div class="db-cust">${r.customer||'고객사 미상'}</div></div>
+      <div><div class="db-cust">${r.customer||'Unknown'}</div></div>
       <div class="db-date">${r.testDate||''}</div>
     </div>
-    <div class="db-part">${r.partName||''} ${r.rawMaterial?'· '+r.rawMaterial:''}</div>
-    <div class="db-tags">
-      ${r.material?`<span class="db-tag db-tag-mat">⬡ ${r.material}</span>`:''}
-      ${inserts.slice(0,2).map(i=>`<span class="db-tag db-tag-ins">${i}</span>`).join('')}
-      ${r.actual?.grade?`<span class="db-tag db-tag-ins" style="border-color:rgba(34,184,176,.2);color:var(--teal);background:rgba(34,184,176,.08)">${r.actual.grade}</span>`:''}
+    <div class="db-part" style="margin-bottom:6px">
+      <span style="font-weight:600;color:var(--text)">${r.partName||''}</span>
+      ${r.material?`<span style="color:var(--text3)"> · </span><span style="color:var(--wip)">${r.material}</span>`:''}
+      ${r.rawMaterial?`<span style="color:var(--text3)"> · </span><span style="color:var(--text2);font-size:9px">${r.rawMaterial}</span>`:''}
+    </div>
+    <div class="db-tags" style="margin-bottom:8px">
+      ${r.productLine?`<span class="db-tag" style="background:rgba(139,92,246,.1);color:var(--violet);border-color:rgba(139,92,246,.2)">${r.productLine}</span>`:''}
+      ${lastProp?.tool?`<span class="db-tag db-tag-ins" style="font-size:8px">${lastProp.tool}</span>`:''}
+      ${lastProp?.insert?`<span class="db-tag db-tag-ins">${lastProp.insert}</span>`:''}
+      ${lastProp?.grade?`<span class="db-tag" style="background:rgba(34,184,176,.08);color:var(--teal);border-color:rgba(34,184,176,.2)">${lastProp.grade}</span>`:''}
       ${r.testResult?`<span class="db-tag ${resClass}">${resIco} ${r.testResult}</span>`:''}
     </div>
     <div class="db-conds">
-      <div class="db-ci"><div class="db-ck">Vc (m/min)</div><div class="db-cv">${r.actual?.vc||'—'}</div></div>
-      <div class="db-ci"><div class="db-ck">fz (mm/t)</div><div class="db-cv">${r.actual?.fz||'—'}</div></div>
-      <div class="db-ci"><div class="db-ck">ap × ae</div><div class="db-cv">${r.actual?.ap||'—'}×${r.actual?.ae||'—'}</div></div>
       <div class="db-ci"><div class="db-ck">Machine</div><div class="db-cv" style="font-size:9px">${r.machineBrand||'—'}</div></div>
-      <div class="db-ci"><div class="db-ck">Tool Life</div><div class="db-cv">${r.actual?.toolLife||'—'} pcs</div></div>
-      <div class="db-ci"><div class="db-ck">Proposals</div><div class="db-cv" style="color:var(--blue)">${props.length}개</div></div>
+      <div class="db-ci"><div class="db-ck">Adaptation</div><div class="db-cv" style="font-size:9px">${r.adaptation||'—'}</div></div>
+      <div class="db-ci"><div class="db-ck">Proposals</div><div class="db-cv" style="color:var(--blue)">${props.length}</div></div>
     </div>
     <div class="db-footer">
       <div class="db-summary">${(r.resultSummary||'').slice(0,70)}${(r.resultSummary||'').length>70?'...':''}</div>
