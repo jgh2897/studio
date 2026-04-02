@@ -444,7 +444,7 @@ select option{background:var(--surf3)}
 .db-m-fi{background:var(--surf2);border-radius:5px;padding:8px 10px}
 .db-m-k{font-size:8px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:2px}
 .db-m-v{font-size:12px;font-weight:600}
-.db-prop-row{background:var(--surf2);border-radius:5px;padding:8px 10px;display:grid;grid-template-columns:70px 1fr 1fr 1fr 1fr 1fr;gap:6px;align-items:center;font-size:10px;font-family:'JetBrains Mono',monospace}
+.db-prop-row{background:var(--surf2);border-radius:5px;padding:8px 10px;display:grid;grid-template-columns:70px 1fr 1fr 1fr 1fr 1fr 1fr 1fr;gap:6px;align-items:center;font-size:10px;font-family:'JetBrains Mono',monospace}
 .db-prop-lbl{color:var(--blue);font-weight:600;font-size:9px}
 .db-prop-hdr{background:transparent;border-radius:0;padding:0 10px 4px;border-bottom:1px solid var(--border);font-size:8px;color:var(--text3)}
 .db-result-box{background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:6px;padding:12px;font-size:11px;color:var(--text2);line-height:1.8;white-space:pre-line}
@@ -1197,8 +1197,8 @@ function dbOpenDetail(id){
     <div class="db-m-sec">
       <div class="db-m-sec-ttl">Proposals 비교</div>
       <div style="display:flex;flex-direction:column;gap:5px">
-        <div class="db-prop-row db-prop-hdr"><div></div><div>INSERT</div><div>GRADE</div><div>fz</div><div>FEED</div><div>LIFE</div></div>
-        ${props.map(p=>`<div class="db-prop-row"><div class="db-prop-lbl">${p.label||''}</div><div>${p.insert||'—'}</div><div>${p.grade||'—'}</div><div>${p.fz||'—'} mm/t</div><div>${p.tableFeed||'—'} mm/min</div><div>${p.toolLife||'—'} pcs</div></div>`).join('')}
+        <div class="db-prop-row db-prop-hdr"><div></div><div>INSERT</div><div>GRADE</div><div>Vc</div><div>N</div><div>fz</div><div>FEED</div><div>LIFE</div></div>
+        ${props.map(p=>`<div class="db-prop-row"><div class="db-prop-lbl">${p.label||''}</div><div>${p.insert||'—'}</div><div>${p.grade||'—'}</div><div>${p.vc||'—'} m/min</div><div>${p.n||'—'} rpm</div><div>${p.fz||'—'} mm/t</div><div>${p.tableFeed||'—'} mm/min</div><div>${p.toolLife||'—'} pcs</div></div>`).join('')}
       </div>
     </div>`:''}
     ${r.resultSummary?`
