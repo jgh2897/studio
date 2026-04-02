@@ -1469,15 +1469,13 @@ function saveGHToken(v){
 }
 async function dbSyncFromGH(){
   try{
-    // Use raw GitHub URL - works in all browsers including Safari
     const res=await fetch('https://raw.githubusercontent.com/jgh2897/studio/main/db.json?t='+Date.now());
     if(res.ok){
       const parsed=await res.json();
       if(Array.isArray(parsed)){
-        let added=0;
-        parsed.forEach(r=>{if(!dbReports.find(x=>x.id===r.id)){dbReports.push(r);added++;}});
+        dbReports=parsed;
         localStorage.setItem(DB_KEY,JSON.stringify(dbReports));
-        dbFilter();dbUpdateStats();toast('☁️ '+added+'건 불러오기 완료','ok');
+        dbFilter();dbUpdateStats();toast('☁️ '+parsed.length+'건 동기화 완료','ok');
       }
     } else {toast('GitHub에 저장된 데이터 없음','info');}
   }catch(e){toast('불러오기 실패: '+e.message,'err');}
