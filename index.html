@@ -1175,6 +1175,23 @@ function dbOpenDetail(id){
   `;
   document.getElementById('db-modal').classList.add('on');
 }
+async function dbSavePDF(id, b64, filename){
+  if(!getGHToken())return;
+  try{
+    const safeName='pdfs/'+String(id).replace(/[^a-zA-Z0-9]/g,'_')+'_'+filename.replace(/[^a-zA-Z0-9._-]/g,'_');
+    let sha='';
+    const getRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+safeName,{headers:{'Authorization':'token '+getGHToken(),'Accept':'application/vnd.github.v3+json'}});
+    if(getRes.ok){const d=await getRes.json();sha=d.sha;}
+    const body={message:'Add PDF '+filename,content:b64};
+    if(sha)body.sha=sha;
+    const res=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+safeName,{method:'PUT',headers:{'Authorization':'token '+getGHToken(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.ok){
+      const r=dbReports.find(x=>String(x.id)===String(id));
+      if(r){r.pdfGHPath=safeName;r.pdfData=null;dbSave();console.log('PDF GitHub 저장 완료');}
+    }else{console.log('PDF GitHub 저장 실패:', await res.text());}
+  }catch(e){console.log('PDF GitHub 저장 에러:',e);}
+}
+
 function dbViewPDF(id){const r=dbReports.find(x=>String(x.id)===String(id));if(!r)return;if(r.pdfGHPath){window.open('https://raw.githubusercontent.com/'+GH_REPO+'/main/'+r.pdfGHPath,'_blank');return;}if(r.pdfData){const blob=new Blob([Uint8Array.from(atob(r.pdfData),c=>c.charCodeAt(0))],{type:'application/pdf'});window.open(URL.createObjectURL(blob),'_blank');}}function dbCloseModal(){document.getElementById('db-modal').classList.remove('on');}
 
 function dbDelete(id){
