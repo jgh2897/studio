@@ -1192,7 +1192,16 @@ async function dbSavePDF(id, b64, filename){
   }catch(e){console.log('PDF GitHub 저장 에러:',e);}
 }
 
-function dbViewPDF(id){const r=dbReports.find(x=>String(x.id)===String(id));if(!r)return;if(r.pdfGHPath){window.open('https://raw.githubusercontent.com/'+GH_REPO+'/main/'+r.pdfGHPath,'_blank');return;}if(r.pdfData){const blob=new Blob([Uint8Array.from(atob(r.pdfData),c=>c.charCodeAt(0))],{type:'application/pdf'});window.open(URL.createObjectURL(blob),'_blank');}}function dbCloseModal(){document.getElementById('db-modal').classList.remove('on');}
+async function dbViewPDF(id){
+  const r=dbReports.find(x=>String(x.id)===String(id));if(!r)return;
+  if(r.pdfGHPath){
+    const rawUrl='https://raw.githubusercontent.com/'+GH_REPO+'/main/'+r.pdfGHPath;
+    const viewerUrl='https://docs.google.com/viewer?url='+encodeURIComponent(rawUrl)+'&embedded=false';
+    window.open(viewerUrl,'_blank');
+    return;
+  }
+  if(r.pdfData){const blob=new Blob([Uint8Array.from(atob(r.pdfData),c=>c.charCodeAt(0))],{type:'application/pdf'});window.open(URL.createObjectURL(blob),'_blank');}
+}function dbCloseModal(){document.getElementById('db-modal').classList.remove('on');}
 
 function dbDelete(id){
   if(!confirm('이 레포트를 삭제하시겠습니까?'))return;
