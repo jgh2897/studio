@@ -1379,7 +1379,22 @@ async function extractAndFill(b64url){
   const spin=document.getElementById('ai-spin'),lbl=document.getElementById('ai-lbl');spin.style.display='block';lbl.textContent='AI 분석 중...';
   try{
     const b64=b64url.split(',')[1],mt=b64url.split(';')[0].split(':')[1];
-    const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`이미지에서 텍스트를 추출하세요. 가공조건이 있다면 JSON도 출력하세요:\n\`\`\`json\n{"title":"","customer":"","ct_table":{"brand_eR":"","brand_eF":"","brand_iR":"","brand_iF":"","holder_eR":"","holder_eF":"","holder_iR":"","holder_iF":"","insert_eR":"","insert_eF":"","insert_iR":"","insert_iF":"","grade_eR":"","grade_eF":"","grade_iR":"","grade_iF":"","vc_eR":"","vc_eF":"","vc_iR":"","vc_iF":"","rpm_eR":"","rpm_eF":"","rpm_iR":"","rpm_iF":"","fz_eR":"","fz_eF":"","fz_iR":"","fz_iF":"","f_eR":"","f_eF":"","f_iR":"","f_iF":"","ae_eR":"","ae_eF":"","ae_iR":"","ae_iF":"","ap_eR":"","ap_eF":"","ap_iR":"","ap_iF":"","ct_eR":"","ct_eF":"","ct_iR":"","ct_iF":"","tl_eR":"","tl_eF":"","tl_iR":"","tl_iF":"","remark_eR":"","remark_eF":"","remark_iR":"","remark_iF":""},"ct_old":"","ct_new":"","cpp":"","saving":"","machine":"","material":"","part":"","summary":""}\n\`\`\`\nJSON 후 전체 텍스트를 출력하세요.`}]}]);
+    const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`이것은 ISCAR 기술영업 엔지니어의 굿노트 현장 기록 이미지입니다. 손글씨와 한국어/영어가 혼재되어 있습니다.
+
+주의사항:
+- Material(피삭재)은 소재 코드입니다 (예: ZF7B, SCM440, SUS316L, FCD550, S45C 등). BT40이나 인치값은 피삭재가 아닙니다.
+- Spindle은 척 사이즈(예: 6", 8") 또는 스핀들 규격(BT40, HSK63)입니다.
+- Machine은 장비 브랜드+모델명입니다 (예: Muratec MW50, DOOSAN PUMA 600).
+- Insert 코드는 대문자 알파넘 형식입니다 (예: WNMG080408-GP, CCMT060204).
+- Grade는 재종 코드입니다 (예: IC630, IC808, IC908).
+- 이미지의 Notes/Discussion 영역 내용은 summary 필드에만 넣으세요. 절삭조건 테이블과 혼용하지 마세요.
+- 절삭조건 테이블은 왼쪽 열(기존/경쟁사)과 오른쪽 열(ISCAR)을 구분하세요.
+
+다음 JSON을 추출하세요:
+\`\`\`json
+{"title":"","customer":"","ct_table":{"brand_eR":"","brand_eF":"","brand_iR":"","brand_iF":"","holder_eR":"","holder_eF":"","holder_iR":"","holder_iF":"","insert_eR":"","insert_eF":"","insert_iR":"","insert_iF":"","grade_eR":"","grade_eF":"","grade_iR":"","grade_iF":"","vc_eR":"","vc_eF":"","vc_iR":"","vc_iF":"","rpm_eR":"","rpm_eF":"","rpm_iR":"","rpm_iF":"","fz_eR":"","fz_eF":"","fz_iR":"","fz_iF":"","f_eR":"","f_eF":"","f_iR":"","f_iF":"","ae_eR":"","ae_eF":"","ae_iR":"","ae_iF":"","ap_eR":"","ap_eF":"","ap_iR":"","ap_iF":"","ct_eR":"","ct_eF":"","ct_iR":"","ct_iF":"","tl_eR":"","tl_eF":"","tl_iR":"","tl_iF":"","remark_eR":"","remark_eF":"","remark_iR":"","remark_iF":""},"ct_old":"","ct_new":"","cpp":"","saving":"","machine":"장비 브랜드+모델","spindle":"척/스핀들 규격","material":"피삭재 소재코드","part":"부품명","process":"공정 (예: OP10 선삭)","summary":"노트/결과/특이사항"}
+\`\`\`
+JSON 후 이미지의 전체 텍스트를 그대로 출력하세요.`}]}]);
     const jm=raw.match(/```json\s*([\s\S]*?)```/);
     if(jm){try{const j=JSON.parse(jm[1]);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.ct_table)setCT(j.ct_table);if(j.ct_old)document.getElementById('c-old').value=j.ct_old;if(j.ct_new)document.getElementById('c-new').value=j.ct_new;if(j.cpp)document.getElementById('c-cpp').value=j.cpp;if(j.saving)document.getElementById('c-save').value=j.saving;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}toast('자동 입력 완료 ✓','ok');}catch(e){}}
     const plain=raw.replace(/```json[\s\S]*?```/,'').trim();document.getElementById('f-extracted').value=plain;
