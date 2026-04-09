@@ -475,11 +475,11 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 <header class="topbar">
   <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div></div>
   <div class="tabs">
-    <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력</div>
+    <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력 <span style="font-size:8px;background:rgba(240,160,32,.2);color:var(--amber);padding:1px 5px;border-radius:3px;margin-left:3px">기록이</span></div>
     <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
-    <div class="tab" id="t3" onclick="goP('p3')"><div class="tab-n">3</div>PPT 생성</div>
+    <div class="tab" id="t3" onclick="goP('p3')"><div class="tab-n">3</div>PPT 생성 <span style="font-size:8px;background:rgba(139,92,246,.2);color:var(--violet);padding:1px 5px;border-radius:3px;margin-left:3px">제안이</span></div>
     <div class="tab" id="t4" onclick="goP('p4')"><div class="tab-n">4</div>굿노트 뷰</div>
-    <div class="tab" id="t5" onclick="goP('p5')"><div class="tab-n">5</div>주간보고</div>
+    <div class="tab" id="t5" onclick="goP('p5')"><div class="tab-n">5</div>주간보고 <span style="font-size:8px;background:rgba(34,184,176,.2);color:var(--teal);padding:1px 5px;border-radius:3px;margin-left:3px">보고이</span></div>
     <div class="tab" id="t6" onclick="goP('p6')" style="color:#60a5fa"><div class="tab-n" style="border-color:#60a5fa">6</div>TEST DB</div>
   </div>
   <div class="tb-r">
@@ -899,9 +899,10 @@ let cid=null, curCat='all', activeCat=null, curResult='ok', curPropStat='applied
 
 const CT_ROWS=[
   {k:'brand',l:'Brand'},{k:'holder',l:'Holder'},{k:'insert',l:'Insert'},{k:'grade',l:'Grade'},
-  {k:'vc',l:'Vc (m/min)'},{k:'rpm',l:'N (RPM)'},{k:'fz',l:'fz (mm/tooth)'},{k:'zeff',l:'날수 (Zeff)'},
-  {k:'f',l:'F (mm/min)'},{k:'ae',l:'Ae (mm)'},{k:'ap',l:'Ap (mm)'},{k:'coolant',l:'Coolant'},
-  {k:'ct',l:'Cycle Time'},{k:'tl',l:'Tool Life'},{k:'remark',l:'Remark'},
+  {k:'dc',l:'DC'},{k:'vc',l:'Vc (m/min)'},{k:'rpm',l:'N (RPM)'},{k:'fz',l:'fz (mm/tooth)'},
+  {k:'zeff',l:'No. of Teeth'},{k:'f',l:'F (mm/min)'},{k:'ae',l:'Ae (mm)'},{k:'ap',l:'Ap (mm)'},
+  {k:'coolant',l:'Coolant'},{k:'ct',l:'Cycle Time (sec)'},{k:'tl',l:'Tool Life'},{k:'corner',l:'Corner / EA'},
+  {k:'remark',l:'Remark'},
 ];
 const CAT_LBL={test:'⚙️ 테스트레포트',meet:'🤝 고객사협의',prop:'📋 제안서'};
 const CAT_COL={test:'var(--amber)',meet:'var(--teal)',prop:'var(--violet)'};
@@ -1366,7 +1367,7 @@ function renderPPTXStrip(slides){const prev=document.getElementById('pptx-previe
 function selectPPTXSlide(num){document.querySelectorAll('.pptx-thumb').forEach(t=>t.classList.remove('on'));const slide=pptxSlides.find(s=>s.num===num);if(slide&&activeCat==='prop'){document.getElementById('f-prop-ext').value=slide.text;}}
 async function classifyPropFromText(text){
   const prompt=`아래는 ISCAR 제안서 PPTX에서 추출한 텍스트입니다. 다음 JSON 형식으로만 분석 결과를 출력하세요 (백틱 없이):\n{"title":"문서 제목","customer":"고객사명","prop_type":"tooling|retooling|process","prop_type_reason":"분류 이유 1문장","tool":"제안 공구 또는 솔루션","effect":"효과금액 또는 절감 내용","summary":"핵심 요약 3-4문장"}\n\n=== PPTX 텍스트 ===\n${text.slice(0,2500)}`;
-  try{const raw=await callAI([{role:'user',content:prompt}]);let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();const j=JSON.parse(clean);
+  try{const raw=await callAI([{role:'user',content:prompt}],{system:AGENTS.bogo,maxTokens:2000});let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();const j=JSON.parse(clean);
     if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}
     if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.tool)document.getElementById('pr-tool').value=j.tool;if(j.effect)document.getElementById('pr-effect').value=j.effect;if(j.summary)document.getElementById('f-summary').value=j.summary;
     if(j.prop_type){curPropType=j.prop_type;document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');const pt=document.querySelector(`[data-pt="${j.prop_type}"]`);if(pt)pt.className='pt-btn on';}
@@ -1379,22 +1380,57 @@ async function extractAndFill(b64url){
   const spin=document.getElementById('ai-spin'),lbl=document.getElementById('ai-lbl');spin.style.display='block';lbl.textContent='AI 분석 중...';
   try{
     const b64=b64url.split(',')[1],mt=b64url.split(';')[0].split(':')[1];
-    const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`이것은 ISCAR 기술영업 엔지니어의 굿노트 현장 기록 이미지입니다. 손글씨와 한국어/영어가 혼재되어 있습니다.
+    const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`당신은 ISCAR Korea 기술영업 현장기록 전문 AI "기록이"입니다.
+아래 이미지는 ISCAR 현장기록지 v5 양식으로 작성된 굿노트 손글씨 기록입니다.
 
-주의사항:
-- Material(피삭재)은 소재 코드입니다 (예: ZF7B, SCM440, SUS316L, FCD550, S45C 등). BT40이나 인치값은 피삭재가 아닙니다.
-- Spindle은 척 사이즈(예: 6", 8") 또는 스핀들 규격(BT40, HSK63)입니다.
-- Machine은 장비 브랜드+모델명입니다 (예: Muratec MW50, DOOSAN PUMA 600).
-- Insert 코드는 대문자 알파넘 형식입니다 (예: WNMG080408-GP, CCMT060204).
-- Grade는 재종 코드입니다 (예: IC630, IC808, IC908).
-- 이미지의 Notes/Discussion 영역 내용은 summary 필드에만 넣으세요. 절삭조건 테이블과 혼용하지 마세요.
-- 절삭조건 테이블은 왼쪽 열(기존/경쟁사)과 오른쪽 열(ISCAR)을 구분하세요.
+=== 현장기록지 v5 양식 구조 ===
+[BASIC INFO]
+- Date: 날짜 (YYYY.M.D 형식)
+- Customer: 고객사명 (한국어)
+- Industry: 산업분류 (예: 자동차, 방산, 기계)
+- Part Name: 부품명 (영문)
+- Material: 소재코드 (예: ZF7B, SCM440, SUS316L, S45C, FCD550, 주강, Ti-6Al-4V)
+- Process: 공정 (예: OP10,OP20 Lathe / OP30 Mill)
+- Machine: 장비 브랜드+모델 (예: Muratec MW50, DOOSAN PUMA 600)
+- Spindle: 척 사이즈 또는 스핀들 규격 (예: 6", 8", BT40, HSK63)
+- Power(kW): 모터 출력
+- Max RPM: 최대 회전수
 
-다음 JSON을 추출하세요:
+[CUTTING CONDITION] - 왼쪽=기존(경쟁사), 오른쪽=ISCAR 제안
+- Brand: 메이커명
+- Holder: 홀더 코드
+- Insert: 인서트 코드 (대문자 영숫자, 예: WNMG080408-GP, CCMT060204)
+- Grade: 재종 코드 (예: IC630N, IC808, IC908, YG214)
+- DC: 직경 (mm)
+- Vc: 절삭속도 (m/min)
+- N(RPM): 주축 회전수
+- fz: 날당 이송 (mm/tooth)
+- No. of Teeth: 날수
+- F: 분당 이송 (mm/min)
+- Ae: 절삭폭 (mm)
+- Ap: 절삭깊이 (mm)
+- Coolant: 쿨런트 (Y/N 또는 종류)
+- Cycle Time(sec): 사이클 타임
+- Tool Life: 공구수명 (EA 또는 개)
+- Corner/EA: 코너수/개수
+- Remark: 비고
+
+[DISCUSSION/NOTES]: 특이사항, 다음 계획, 결과
+[RESULT]: 결과 요약
+
+=== 추출 규칙 ===
+- 손글씨 특성상 유사 문자 주의: 0↔O, 1↔I↔l, 6↔G, 8↔B
+- Material은 반드시 소재코드만 (장비규격 BT40, 척 6" 등은 Material 아님)
+- 절삭조건 왼쪽 열 → eR(기존 Rough), eF(기존 Finish)
+- 절삭조건 오른쪽 열 → iR(ISCAR Rough), iF(ISCAR Finish)
+- DISCUSSION/NOTES 내용은 summary에만, 절삭조건과 혼용 금지
+- 빈 칸은 ""로 처리
+
+다음 JSON만 출력 후 전체 텍스트:
 \`\`\`json
-{"title":"","customer":"","ct_table":{"brand_eR":"","brand_eF":"","brand_iR":"","brand_iF":"","holder_eR":"","holder_eF":"","holder_iR":"","holder_iF":"","insert_eR":"","insert_eF":"","insert_iR":"","insert_iF":"","grade_eR":"","grade_eF":"","grade_iR":"","grade_iF":"","vc_eR":"","vc_eF":"","vc_iR":"","vc_iF":"","rpm_eR":"","rpm_eF":"","rpm_iR":"","rpm_iF":"","fz_eR":"","fz_eF":"","fz_iR":"","fz_iF":"","f_eR":"","f_eF":"","f_iR":"","f_iF":"","ae_eR":"","ae_eF":"","ae_iR":"","ae_iF":"","ap_eR":"","ap_eF":"","ap_iR":"","ap_iF":"","ct_eR":"","ct_eF":"","ct_iR":"","ct_iF":"","tl_eR":"","tl_eF":"","tl_iR":"","tl_iF":"","remark_eR":"","remark_eF":"","remark_iR":"","remark_iF":""},"ct_old":"","ct_new":"","cpp":"","saving":"","machine":"장비 브랜드+모델","spindle":"척/스핀들 규격","material":"피삭재 소재코드","part":"부품명","process":"공정 (예: OP10 선삭)","summary":"노트/결과/특이사항"}
+{"title":"","customer":"","date":"","industry":"","ct_table":{"brand_eR":"","brand_eF":"","brand_iR":"","brand_iF":"","holder_eR":"","holder_eF":"","holder_iR":"","holder_iF":"","insert_eR":"","insert_eF":"","insert_iR":"","insert_iF":"","grade_eR":"","grade_eF":"","grade_iR":"","grade_iF":"","dc_eR":"","dc_eF":"","dc_iR":"","dc_iF":"","vc_eR":"","vc_eF":"","vc_iR":"","vc_iF":"","rpm_eR":"","rpm_eF":"","rpm_iR":"","rpm_iF":"","fz_eR":"","fz_eF":"","fz_iR":"","fz_iF":"","zeff_eR":"","zeff_eF":"","zeff_iR":"","zeff_iF":"","f_eR":"","f_eF":"","f_iR":"","f_iF":"","ae_eR":"","ae_eF":"","ae_iR":"","ae_iF":"","ap_eR":"","ap_eF":"","ap_iR":"","ap_iF":"","coolant_eR":"","coolant_eF":"","coolant_iR":"","coolant_iF":"","ct_eR":"","ct_eF":"","ct_iR":"","ct_iF":"","tl_eR":"","tl_eF":"","tl_iR":"","tl_iF":"","corner_eR":"","corner_eF":"","corner_iR":"","corner_iF":"","remark_eR":"","remark_eF":"","remark_iR":"","remark_iF":""},"machine":"장비명 모델","spindle":"스핀들/척","power":"kW","maxrpm":"RPM","material":"소재코드","part":"부품명","process":"공정","summary":"DISCUSSION+NOTES+RESULT 내용 전체"}
 \`\`\`
-JSON 후 이미지의 전체 텍스트를 그대로 출력하세요.`}]}]);
+JSON 후 이미지 전체 텍스트를 그대로 출력하세요.`}]}]);
     const jm=raw.match(/```json\s*([\s\S]*?)```/);
     if(jm){try{const j=JSON.parse(jm[1]);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.ct_table)setCT(j.ct_table);if(j.ct_old)document.getElementById('c-old').value=j.ct_old;if(j.ct_new)document.getElementById('c-new').value=j.ct_new;if(j.cpp)document.getElementById('c-cpp').value=j.cpp;if(j.saving)document.getElementById('c-save').value=j.saving;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}toast('자동 입력 완료 ✓','ok');}catch(e){}}
     const plain=raw.replace(/```json[\s\S]*?```/,'').trim();document.getElementById('f-extracted').value=plain;
@@ -1407,7 +1443,38 @@ async function extractProp(b64url){
   const spin=document.getElementById('ai-spin-prop'),lbl=document.getElementById('ai-lbl-prop');spin.style.display='block';lbl.textContent='제안서 분석 중...';
   try{const b64=b64url.split(',')[1],mt=b64url.split(';')[0].split(':')[1];const raw=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:`이 제안서 이미지를 분석하세요. JSON 형식으로만 출력하세요 (백틱 없이):\n{"title":"","customer":"","prop_type":"tooling|retooling|process","tool":"","effect":"","summary":""}`}]}]);let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();try{const j=JSON.parse(clean);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.tool)document.getElementById('pr-tool').value=j.tool;if(j.effect)document.getElementById('pr-effect').value=j.effect;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.prop_type){curPropType=j.prop_type;document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');const pt=document.querySelector(`[data-pt="${j.prop_type}"]`);if(pt)pt.className='pt-btn on';}toast('제안서 분류 완료 ✓','ok');}catch(e){document.getElementById('f-prop-ext').value=raw.slice(0,1500);}lbl.textContent='분석 완료 ✓';}catch(e){lbl.textContent='분석 실패';toast('분석 실패: '+e.message,'err');}finally{spin.style.display='none';}
 }
-async function callAI(messages){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});const data=await res.json();return data.content?.[0]?.text||'';}
+async function callAI(messages, opts={}){
+  const body={model:'claude-sonnet-4-20250514',max_tokens:opts.maxTokens||1000,messages};
+  if(opts.system)body.system=opts.system;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify(body)});
+  const data=await res.json();
+  return data.content?.[0]?.text||'';
+}
+
+// ── 에이전트 시스템 프롬프트 ──
+const AGENTS={
+  girok:`당신은 ISCAR Korea 기술영업 현장기록 전문 AI "기록이"입니다.
+ISCAR 현장기록지 v5 양식을 정확히 이해하고, 손글씨 이미지에서 데이터를 추출하는 전문가입니다.
+Material은 소재코드(ZF7B, SCM440 등)이며 장비규격(BT40, 6")이 아닙니다.
+절삭조건 좌측=기존/경쟁사, 우측=ISCAR 제안입니다.
+항상 JSON 형식으로 정확하게 추출하고 빈 칸은 빈 문자열로 처리합니다.`,
+
+  bogo:`당신은 ISCAR Korea 기술영업 보고서 전문 AI "보고이"입니다.
+전가흥 기술사원의 주간업무보고 양식을 정확히 학습했습니다.
+양식: 7) 기술사원 업무 현황 → N) 고객사 -- 업무제목 → [기본정보][기존TOOL][이스카TOOL][업무내용] → 효과금액 → 감사합니다.
+공식적이고 전문적인 기술영업 문체로 작성합니다.
+숫자와 공구코드는 정확하게 기재하고 효과금액은 구체적으로 산출합니다.`,
+
+  bunsuk:`당신은 ISCAR Korea 기술영업 분석 전문 AI "분석이"입니다.
+절삭 테스트 데이터를 분석하여 경쟁사 대비 ISCAR 공구의 우위를 정량적으로 도출합니다.
+공구수명 향상률, C/T 단축률, 연간 효과금액을 계산합니다.
+기술영업 관점에서 고객 설득력 있는 분석 결과를 제공합니다.`,
+
+  jeanui:`당신은 ISCAR Korea 기술영업 제안서 전문 AI "제안이"입니다.
+분석 결과를 바탕으로 Before/After 구성의 설득력 있는 PPT 제안서를 작성합니다.
+원가절감, 생산성 향상, 공구수명 개선 등 고객 가치를 강조합니다.
+슬라이드 구성은 표지 → 현황 → 문제점 → 이스카 솔루션 → 효과 → 결론 순입니다.`
+};
 function saveDoc(){
   const title=document.getElementById('f-title').value.trim();if(!title){toast('제목을 입력하세요','err');return;}
   const cat=activeCat;
@@ -1469,7 +1536,7 @@ async function genPPT(){
     const styleLbl={summary:'영업·보고용 Summary (5-6장)',technical:'기술 상세 Report (8-10장)',proposal:'제안서 Proposal (6-8장)'};
     const prompt=`ISCAR 기술영업 컨설턴트로서 아래 문서를 ${styleLbl[pptStyle]} PPT 구성안으로 작성하세요.\n${document.getElementById('p3-extra').value?`추가요청: ${document.getElementById('p3-extra').value}\n`:''}\n=== 문서 ===\n${docBlocks}\n============\n\n【슬라이드 N】 제목 형식. 절삭조건은 표로, 원가절감 강조, 제안서는 Before/After, 마지막에 [디자인 가이드].`;
     setGS('gs2','done');setGS('gs3','active');
-    pptTxt=await callAI([{role:'user',content:prompt}]);
+    pptTxt=await callAI([{role:'user',content:prompt}],{system:AGENTS.jeanui,maxTokens:2000});
     setGS('gs3','done');setGS('gs4','active');await dl(300);setGS('gs4','done');
     document.getElementById('ppt-box').textContent=pptTxt;renderThumbs(pptTxt,sel[0]);document.getElementById('p3-after').style.display='block';toast('PPT 생성 완료','ok');
   }catch(e){toast('생성 실패: '+e.message,'err');document.getElementById('p3-before').style.display='block';}
@@ -1542,7 +1609,7 @@ ${document.getElementById('w-extra').value?`추가요청: ${document.getElementB
 
 다음 JSON만 출력 (백틱 없이):
 {"period":"${from}~${to}","week":"${week}","author":"${auth}","items":[{"seq":1,"customer":"고객사명","title":"N) 고객사명 -- 업무제목","machine_status":"장비현황","tool_cost":"공구비 현황","parts":"가공품","part":"부품명","material":"소재","machine":"장비명/스핀들/RPM/kW","existing_tool":"기존 공구코드 -- T/L N개","existing_condition":"기존 가공조건","problem":"문제점","iscar_tool":"ISCAR 공구코드 -- T/L N개","iscar_condition":"이스카 가공조건","work_details":"업무내용 (번호 목록)","effect":"효과금액: N만원/년"}],"notes":"특이사항/다음주예정"}`;
-    const raw=await callAI([{role:'user',content:prompt}]);let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();const report=JSON.parse(clean);weeklyTxt=buildWeeklyTxt(report);renderWeeklyGN(report);document.getElementById('w-status').textContent=`완료 — ${(report.items||[]).length}개 항목`;document.getElementById('btn-cp-w').disabled=false;document.getElementById('btn-dl-w').disabled=false;toast('주간보고서 생성 완료','ok');
+    const raw=await callAI([{role:'user',content:prompt}],{system:AGENTS.bogo,maxTokens:2000});let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();const report=JSON.parse(clean);weeklyTxt=buildWeeklyTxt(report);renderWeeklyGN(report);document.getElementById('w-status').textContent=`완료 — ${(report.items||[]).length}개 항목`;document.getElementById('btn-cp-w').disabled=false;document.getElementById('btn-dl-w').disabled=false;toast('주간보고서 생성 완료','ok');
   }catch(e){document.getElementById('w5-vp').innerHTML=`<div style="padding:36px;text-align:center;color:var(--ng);font-size:12px">생성 실패: ${e.message}<br><br><button class="btn btn-ghost" onclick="resetWeekly()">초기화</button></div>`;document.getElementById('w-status').textContent='생성 실패';toast('실패: '+e.message,'err');}
 }
 function renderWeeklyGN(r){
