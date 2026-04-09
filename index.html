@@ -627,27 +627,42 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
           </div>
         </div>
         <div id="ct-area" style="display:none">
-          <div class="slbl">절삭 조건 비교</div>
-          <div class="ct-wrap">
-            <table class="ct-tbl">
-              <thead>
-                <tr><th style="width:80px">항목</th><th colspan="2" style="text-align:center;color:var(--text2)">기존 (LOCAL)</th><th colspan="2" class="th-iscar" style="text-align:center">ISCAR</th></tr>
-                <tr><th></th><th>Rough</th><th>Finish</th><th style="color:var(--amber)">Rough</th><th style="color:var(--amber)">Finish</th></tr>
-              </thead>
+          <div class="slbl" style="display:flex;align-items:center;justify-content:space-between">
+            <span>절삭 조건 비교</span>
+            <div style="display:flex;gap:4px;align-items:center">
+              <button class="btn btn-ghost btn-sm" onclick="addCtCol()" style="font-size:9px;padding:2px 7px">+ 공정 추가</button>
+              <button class="btn btn-ghost btn-sm" onclick="resetCtCols()" style="font-size:9px;padding:2px 7px">초기화</button>
+            </div>
+          </div>
+          <div class="ct-wrap" style="overflow-x:auto">
+            <table class="ct-tbl" id="ct-tbl">
+              <thead id="ct-head"></thead>
               <tbody id="ct-body"></tbody>
             </table>
           </div>
-          <div class="slbl" style="margin-top:9px">원가 비교</div>
+          <div class="slbl" style="margin-top:9px">원가 비교 <span style="font-size:8px;color:var(--text3)">입력시 자동 계산</span></div>
           <div class="cost-row">
-            <div class="cost-card"><div class="cl">기존 C/T</div><input id="c-old" placeholder="970" style="text-align:center;font-size:14px;font-weight:700;background:transparent;border:1px solid var(--border)"><div class="cu">sec</div></div>
-            <div class="cost-card"><div class="cl">ISCAR C/T</div><input id="c-new" placeholder="936" style="text-align:center;font-size:14px;font-weight:700;color:var(--amber);background:transparent;border:1px solid var(--border)"><div class="cu">sec</div></div>
-            <div class="cost-card"><div class="cl">CPP</div><input id="c-cpp" placeholder="79.63" style="text-align:center;font-size:14px;font-weight:700;color:var(--ok);background:transparent;border:1px solid var(--border)"><div class="cu">원</div></div>
+            <div class="cost-card"><div class="cl">기존 C/T</div><input id="c-old" placeholder="970" oninput="calcCT()" style="text-align:center;font-size:14px;font-weight:700;background:transparent;border:1px solid var(--border)"><div class="cu">sec</div></div>
+            <div class="cost-card"><div class="cl">ISCAR C/T</div><input id="c-new" placeholder="936" oninput="calcCT()" style="text-align:center;font-size:14px;font-weight:700;color:var(--amber);background:transparent;border:1px solid var(--border)"><div class="cu">sec</div></div>
+            <div class="cost-card" id="ct-rate-card" style="display:none"><div class="cl">C/T 단축률</div><div id="ct-rate" style="text-align:center;font-size:14px;font-weight:700;color:var(--ok);padding:4px 0"></div><div class="cu">%</div></div>
           </div>
+          <div class="cost-row" style="margin-top:6px">
+            <div class="cost-card"><div class="cl">기존 공구 단가</div><input id="c-price-old" placeholder="15000" oninput="calcCPP()" style="text-align:center;font-size:13px;font-weight:700;background:transparent;border:1px solid var(--border)"><div class="cu">원</div></div>
+            <div class="cost-card"><div class="cl">코너수</div><input id="c-corner-old" placeholder="6" oninput="calcCPP()" style="text-align:center;font-size:13px;font-weight:700;background:transparent;border:1px solid var(--border)"><div class="cu">EA</div></div>
+            <div class="cost-card"><div class="cl">ISCAR 공구 단가</div><input id="c-price-new" placeholder="12000" oninput="calcCPP()" style="text-align:center;font-size:13px;font-weight:700;color:var(--amber);background:transparent;border:1px solid var(--border)"><div class="cu">원</div></div>
+            <div class="cost-card"><div class="cl">코너수</div><input id="c-corner-new" placeholder="4" oninput="calcCPP()" style="text-align:center;font-size:13px;font-weight:700;color:var(--amber);background:transparent;border:1px solid var(--border)"><div class="cu">EA</div></div>
+          </div>
+          <div class="cost-row" style="margin-top:6px" id="cpp-result-row" style="display:none">
+            <div class="cost-card"><div class="cl">기존 CPP</div><div id="c-cpp-old-val" style="text-align:center;font-size:13px;font-weight:700;color:var(--text2);padding:4px 0">-</div><div class="cu">원/코너</div></div>
+            <div class="cost-card"><div class="cl">ISCAR CPP</div><div id="c-cpp-new-val" style="text-align:center;font-size:13px;font-weight:700;color:var(--amber);padding:4px 0">-</div><div class="cu">원/코너</div></div>
+            <div class="cost-card"><div class="cl">절감률</div><div id="c-cpp-rate" style="text-align:center;font-size:14px;font-weight:700;color:var(--ok);padding:4px 0">-</div><div class="cu">%</div></div>
+          </div>
+          <div style="display:none"><input id="c-cpp" placeholder=""><input id="c-save" placeholder=""></div>
           <div class="fi" style="margin-top:6px"><label>원가 절감 메모</label><input id="c-save" placeholder="예: 1.6% 절감, 공구비 800→880원"></div>
         </div>
         <div class="fi">
-          <div class="slbl">요약 / 특이사항</div>
-          <textarea id="f-summary" style="min-height:75px" placeholder="핵심 결론, 트러블, 다음 액션"></textarea>
+          <div class="slbl">요약 / 특이사항 <span style="color:var(--amber);font-size:7px">기록이 자동 정리</span></div>
+          <textarea id="f-summary" style="min-height:120px;line-height:1.7" placeholder="AI가 자동으로 번호 목록으로 정리합니다&#10;1. 테스트 결과&#10;2. 특이사항&#10;3. 다음 액션"></textarea>
         </div>
       </div>
     </div>
@@ -1324,10 +1339,160 @@ function chkSave(){document.getElementById('btn-save').disabled=!document.getEle
 function setResult(r,el){curResult=r;document.querySelectorAll('[id^="rs-"]').forEach(e=>e.className='stat-btn');el.className=`stat-btn on-${r==='ok'?'ok':r==='ng'?'ng':'wip'}`;}
 function setPropStat(s,el){curPropStat=s;document.querySelectorAll('[id^="ps-"]').forEach(e=>e.className='stat-btn');el.className=`stat-btn on-${s}`;}
 function pickPT(el){document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');el.className='pt-btn on';curPropType=el.dataset.pt;}
-function buildCT(){document.getElementById('ct-body').innerHTML=CT_ROWS.map(r=>`<tr><td class="ct-rlbl">${r.l}</td><td><input id="ct-${r.k}-eR" placeholder="-"></td><td><input id="ct-${r.k}-eF" placeholder="-"></td><td><input id="ct-${r.k}-iR" placeholder="-"></td><td><input id="ct-${r.k}-iF" placeholder="-"></td></tr>`).join('');}
-function getCT(){const o={};CT_ROWS.forEach(r=>['eR','eF','iR','iF'].forEach(c=>{const el=document.getElementById(`ct-${r.k}-${c}`);if(el)o[`${r.k}_${c}`]=el.value;}));return o;}
-function setCT(d){if(!d)return;CT_ROWS.forEach(r=>['eR','eF','iR','iF'].forEach(c=>{const el=document.getElementById(`ct-${r.k}-${c}`);if(el)el.value=d[`${r.k}_${c}`]||'';}));}
-function clearCT(){CT_ROWS.forEach(r=>['eR','eF','iR','iF'].forEach(c=>{const el=document.getElementById(`ct-${r.k}-${c}`);if(el)el.value='';}));}
+// ── 동적 CT 테이블 ──
+let ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
+
+function buildCT(){
+  renderCtHead();
+  renderCtBody();
+}
+
+function renderCtHead(){
+  const head=document.getElementById('ct-head');
+  if(!head)return;
+  // Row 1: 항목 + 열 이름
+  let r1=`<tr><th style="width:80px">항목</th>`;
+  ctCols.forEach(c=>{
+    const style=c.iscar?'color:var(--amber);text-align:center':'text-align:center;color:var(--text2)';
+    r1+=`<th colspan="2" style="${style}">${c.label}</th>`;
+  });
+  r1+=`</tr>`;
+  // Row 2: Rough/Finish per col
+  let r2=`<tr><th></th>`;
+  ctCols.forEach(c=>{
+    const style=c.iscar?'color:var(--amber)':'';
+    r2+=`<th style="${style}">Rough</th><th style="${style}">Finish</th>`;
+  });
+  r2+=`</tr>`;
+  head.innerHTML=r1+r2;
+}
+
+function renderCtBody(){
+  const body=document.getElementById('ct-body');
+  if(!body)return;
+  body.innerHTML=CT_ROWS.map(r=>{
+    let td=`<tr><td class="ct-rlbl">${r.l}</td>`;
+    ctCols.forEach(c=>{
+      td+=`<td><input id="ct-${r.k}-${c.id}R" placeholder="-"></td>`;
+      td+=`<td><input id="ct-${r.k}-${c.id}F" placeholder="-"></td>`;
+    });
+    td+=`</tr>`;
+    return td;
+  }).join('');
+}
+
+function addCtCol(){
+  const name=prompt('공정명 입력 (예: OP20 외경, Finish):','');
+  if(!name)return;
+  const id='c'+(ctCols.length);
+  const iscar=name.toLowerCase().includes('iscar')||ctCols.filter(c=>c.iscar).length<ctCols.filter(c=>!c.iscar).length;
+  ctCols.push({id,label:name,iscar});
+  buildCT();
+}
+
+function resetCtCols(){
+  ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
+  buildCT();
+}
+
+function getCT(){
+  const o={};
+  CT_ROWS.forEach(r=>{
+    ctCols.forEach(c=>{
+      ['R','F'].forEach(rf=>{
+        const el=document.getElementById(`ct-${r.k}-${c.id}${rf}`);
+        if(el)o[`${r.k}_${c.id}${rf}`]=el.value;
+      });
+    });
+  });
+  // Also store col structure
+  o.__cols=JSON.stringify(ctCols);
+  return o;
+}
+
+function setCT(d){
+  if(!d)return;
+  // Restore col structure if saved
+  if(d.__cols){
+    try{ctCols=JSON.parse(d.__cols);buildCT();}catch(e){}
+  }
+  CT_ROWS.forEach(r=>{
+    ctCols.forEach(c=>{
+      ['R','F'].forEach(rf=>{
+        const el=document.getElementById(`ct-${r.k}-${c.id}${rf}`);
+        if(el)el.value=d[`${r.k}_${c.id}${rf}`]||d[`${r.k}_${c.id==='e'?'eR':c.id==='i'?'iR':c.id+rf}`]||'';
+      });
+    });
+    // Fallback: legacy eR/eF/iR/iF keys
+    ['eR','eF','iR','iF'].forEach(old=>{
+      const mapping={'eR':'eR','eF':'eF','iR':'iR','iF':'iF'};
+      const el=document.getElementById(`ct-${r.k}-${old}`);
+      if(el&&d[`${r.k}_${old}`]&&!el.value)el.value=d[`${r.k}_${old}`];
+    });
+  });
+}
+
+function clearCT(){
+  CT_ROWS.forEach(r=>{
+    ctCols.forEach(c=>{
+      ['R','F'].forEach(rf=>{
+        const el=document.getElementById(`ct-${r.k}-${c.id}${rf}`);
+        if(el)el.value='';
+      });
+    });
+  });
+}
+
+// AI 추출 후 동적 열 자동 설정
+function autoSetCtCols(ctTable){
+  if(!ctTable)return;
+  const hasER=CT_ROWS.some(r=>ctTable[`${r.k}_eR`]);
+  const hasEF=CT_ROWS.some(r=>ctTable[`${r.k}_eF`]);
+  const hasIR=CT_ROWS.some(r=>ctTable[`${r.k}_iR`]);
+  const hasIF=CT_ROWS.some(r=>ctTable[`${r.k}_iF`]);
+  // 기존R/기존F 모두 있으면 황/정삭 구분, 아니면 단일
+  const needRF=(hasER&&hasEF)||(hasIR&&hasIF);
+  if(needRF){
+    ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
+  } else {
+    ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
+  }
+  buildCT();
+}
+function calcCT(){
+  const old=parseFloat(document.getElementById('c-old').value);
+  const nw=parseFloat(document.getElementById('c-new').value);
+  const card=document.getElementById('ct-rate-card');
+  const el=document.getElementById('ct-rate');
+  if(old>0&&nw>0&&card&&el){
+    const rate=((old-nw)/old*100).toFixed(1);
+    el.textContent=(rate>0?'▼ ':rate<0?'▲ ':'')+Math.abs(rate)+'%';
+    el.style.color=rate>0?'var(--ok)':rate<0?'var(--ng)':'var(--text)';
+    card.style.display='';
+  } else if(card){card.style.display='none';}
+}
+
+function calcCPP(){
+  const po=parseFloat(document.getElementById('c-price-old').value);
+  const co=parseFloat(document.getElementById('c-corner-old').value);
+  const pn=parseFloat(document.getElementById('c-price-new').value);
+  const cn=parseFloat(document.getElementById('c-corner-new').value);
+  const row=document.getElementById('cpp-result-row');
+  if(po>0&&co>0){
+    const cppO=po/co;
+    document.getElementById('c-cpp-old-val').textContent=Math.round(cppO).toLocaleString();
+    if(pn>0&&cn>0){
+      const cppN=pn/cn;
+      document.getElementById('c-cpp-new-val').textContent=Math.round(cppN).toLocaleString();
+      const rate=((cppO-cppN)/cppO*100).toFixed(1);
+      const rateEl=document.getElementById('c-cpp-rate');
+      rateEl.textContent=(rate>0?'▼ ':rate<0?'▲ ':'')+Math.abs(rate)+'%';
+      rateEl.style.color=rate>0?'var(--ok)':rate<0?'var(--ng)':'var(--text)';
+      if(row)row.style.display='';
+    }
+  } else if(row){row.style.display='none';}
+}
+
 function dzOver(e){e.preventDefault();document.getElementById('dz').classList.add('drag');}
 function dzLeave(){document.getElementById('dz').classList.remove('drag');}
 function dzDrop(e){e.preventDefault();dzLeave();const f=e.dataTransfer.files[0];if(f)loadFile(f);}
@@ -1423,16 +1588,27 @@ async function extractAndFill(b64url){
 - Material은 반드시 소재코드만 (장비규격 BT40, 척 6" 등은 Material 아님)
 - 절삭조건 왼쪽 열 → eR(기존 Rough), eF(기존 Finish)
 - 절삭조건 오른쪽 열 → iR(ISCAR Rough), iF(ISCAR Finish)
-- DISCUSSION/NOTES 내용은 summary에만, 절삭조건과 혼용 금지
+- DISCUSSION/NOTES/RESULT 내용은 summary에만 넣고, 절삭조건과 혼용 금지
+- summary는 반드시 번호 목록으로 정리 (1. xxx\n2. xxx\n3. xxx 형식)
+- 단순 나열이 아닌 핵심 내용을 간결하게 요약 정리
+- 다음 액션, 테스트 예정, 결과 등을 구분하여 기재
 - 빈 칸은 ""로 처리
 
 다음 JSON만 출력 후 전체 텍스트:
 \`\`\`json
-{"title":"","customer":"","date":"","industry":"","ct_table":{"brand_eR":"","brand_eF":"","brand_iR":"","brand_iF":"","holder_eR":"","holder_eF":"","holder_iR":"","holder_iF":"","insert_eR":"","insert_eF":"","insert_iR":"","insert_iF":"","grade_eR":"","grade_eF":"","grade_iR":"","grade_iF":"","dc_eR":"","dc_eF":"","dc_iR":"","dc_iF":"","vc_eR":"","vc_eF":"","vc_iR":"","vc_iF":"","rpm_eR":"","rpm_eF":"","rpm_iR":"","rpm_iF":"","fz_eR":"","fz_eF":"","fz_iR":"","fz_iF":"","zeff_eR":"","zeff_eF":"","zeff_iR":"","zeff_iF":"","f_eR":"","f_eF":"","f_iR":"","f_iF":"","ae_eR":"","ae_eF":"","ae_iR":"","ae_iF":"","ap_eR":"","ap_eF":"","ap_iR":"","ap_iF":"","coolant_eR":"","coolant_eF":"","coolant_iR":"","coolant_iF":"","ct_eR":"","ct_eF":"","ct_iR":"","ct_iF":"","tl_eR":"","tl_eF":"","tl_iR":"","tl_iF":"","corner_eR":"","corner_eF":"","corner_iR":"","corner_iF":"","remark_eR":"","remark_eF":"","remark_iR":"","remark_iF":""},"machine":"장비명 모델","spindle":"스핀들/척","power":"kW","maxrpm":"RPM","material":"소재코드","part":"부품명","process":"공정","summary":"DISCUSSION+NOTES+RESULT 내용 전체"}
+{"title":"","customer":"","date":"","industry":"","ct_table":{"brand_eR":"","brand_eF":"","brand_iR":"","brand_iF":"","holder_eR":"","holder_eF":"","holder_iR":"","holder_iF":"","insert_eR":"","insert_eF":"","insert_iR":"","insert_iF":"","grade_eR":"","grade_eF":"","grade_iR":"","grade_iF":"","dc_eR":"","dc_eF":"","dc_iR":"","dc_iF":"","vc_eR":"","vc_eF":"","vc_iR":"","vc_iF":"","rpm_eR":"","rpm_eF":"","rpm_iR":"","rpm_iF":"","fz_eR":"","fz_eF":"","fz_iR":"","fz_iF":"","zeff_eR":"","zeff_eF":"","zeff_iR":"","zeff_iF":"","f_eR":"","f_eF":"","f_iR":"","f_iF":"","ae_eR":"","ae_eF":"","ae_iR":"","ae_iF":"","ap_eR":"","ap_eF":"","ap_iR":"","ap_iF":"","coolant_eR":"","coolant_eF":"","coolant_iR":"","coolant_iF":"","ct_eR":"","ct_eF":"","ct_iR":"","ct_iF":"","tl_eR":"","tl_eF":"","tl_iR":"","tl_iF":"","corner_eR":"","corner_eF":"","corner_iR":"","corner_iF":"","remark_eR":"","remark_eF":"","remark_iR":"","remark_iF":""},"machine":"장비명 모델","spindle":"스핀들/척","power":"kW","maxrpm":"RPM","material":"소재코드","part":"부품명","process":"공정","summary":"DISCUSSION/NOTES/RESULT 내용을 번호 목록으로 정리 (예: 1. 내용\n2. 내용)"}
 \`\`\`
 JSON 후 이미지 전체 텍스트를 그대로 출력하세요.`}]}]);
     const jm=raw.match(/```json\s*([\s\S]*?)```/);
-    if(jm){try{const j=JSON.parse(jm[1]);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.ct_table)setCT(j.ct_table);if(j.ct_old)document.getElementById('c-old').value=j.ct_old;if(j.ct_new)document.getElementById('c-new').value=j.ct_new;if(j.cpp)document.getElementById('c-cpp').value=j.cpp;if(j.saving)document.getElementById('c-save').value=j.saving;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}toast('자동 입력 완료 ✓','ok');}catch(e){}}
+    if(jm){try{const j=JSON.parse(jm[1]);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.ct_table)setCT(j.ct_table);if(j.ct_old)document.getElementById('c-old').value=j.ct_old;if(j.ct_new)document.getElementById('c-new').value=j.ct_new;if(j.cpp)document.getElementById('c-cpp').value=j.cpp;if(j.saving)document.getElementById('c-save').value=j.saving;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}
+if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}
+if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}
+if(j.industry){const el=document.getElementById('m-ind');if(el)el.value=j.industry;}
+if(j.process){const el=document.getElementById('m-proc');if(el)el.value=j.process;}
+if(j.spindle||j.power){const el=document.getElementById('m-spindle');if(el)el.value=[j.spindle,j.power?j.power+'kW':''].filter(Boolean).join(', ');}
+if(j.maxrpm){const el=document.getElementById('m-maxrpm');if(el)el.value=j.maxrpm;}
+if(j.date&&!document.getElementById('f-date').value){const el=document.getElementById('f-date');if(el)el.value=j.date;}
+toast('자동 입력 완료 ✓','ok');}catch(e){console.log('fill err',e);}}
     const plain=raw.replace(/```json[\s\S]*?```/,'').trim();document.getElementById('f-extracted').value=plain;
     if(!document.getElementById('f-title').value&&plain){document.getElementById('f-title').value=plain.split('\n')[0].trim().slice(0,50);chkSave();}
     lbl.textContent='추출 완료 ✓';
