@@ -1350,21 +1350,13 @@ function buildCT(){
 function renderCtHead(){
   const head=document.getElementById('ct-head');
   if(!head)return;
-  // Row 1: 항목 + 열 이름
   let r1=`<tr><th style="width:80px">항목</th>`;
   ctCols.forEach(c=>{
     const style=c.iscar?'color:var(--amber);text-align:center':'text-align:center;color:var(--text2)';
-    r1+=`<th colspan="2" style="${style}">${c.label}</th>`;
+    r1+=`<th style="${style}">${c.label}</th>`;
   });
   r1+=`</tr>`;
-  // Row 2: Rough/Finish per col
-  let r2=`<tr><th></th>`;
-  ctCols.forEach(c=>{
-    const style=c.iscar?'color:var(--amber)':'';
-    r2+=`<th style="${style}">Rough</th><th style="${style}">Finish</th>`;
-  });
-  r2+=`</tr>`;
-  head.innerHTML=r1+r2;
+  head.innerHTML=r1;
 }
 
 function renderCtBody(){
@@ -1373,8 +1365,7 @@ function renderCtBody(){
   body.innerHTML=CT_ROWS.map(r=>{
     let td=`<tr><td class="ct-rlbl">${r.l}</td>`;
     ctCols.forEach(c=>{
-      td+=`<td><input id="ct-${r.k}-${c.id}R" placeholder="-"></td>`;
-      td+=`<td><input id="ct-${r.k}-${c.id}F" placeholder="-"></td>`;
+      td+=`<td><input id="ct-${r.k}-${c.id}" placeholder="-"></td>`;
     });
     td+=`</tr>`;
     return td;
@@ -1399,46 +1390,35 @@ function getCT(){
   const o={};
   CT_ROWS.forEach(r=>{
     ctCols.forEach(c=>{
-      ['R','F'].forEach(rf=>{
-        const el=document.getElementById(`ct-${r.k}-${c.id}${rf}`);
-        if(el)o[`${r.k}_${c.id}${rf}`]=el.value;
-      });
+      const el=document.getElementById(`ct-${r.k}-${c.id}`);
+      if(el)o[`${r.k}_${c.id}`]=el.value;
     });
   });
-  // Also store col structure
   o.__cols=JSON.stringify(ctCols);
   return o;
 }
 
 function setCT(d){
   if(!d)return;
-  // Restore col structure if saved
-  if(d.__cols){
-    try{ctCols=JSON.parse(d.__cols);buildCT();}catch(e){}
-  }
+  if(d.__cols){try{ctCols=JSON.parse(d.__cols);buildCT();}catch(e){}}
   CT_ROWS.forEach(r=>{
     ctCols.forEach(c=>{
-      ['R','F'].forEach(rf=>{
-        const el=document.getElementById(`ct-${r.k}-${c.id}${rf}`);
-        if(el)el.value=d[`${r.k}_${c.id}${rf}`]||d[`${r.k}_${c.id==='e'?'eR':c.id==='i'?'iR':c.id+rf}`]||'';
-      });
+      const el=document.getElementById(`ct-${r.k}-${c.id}`);
+      if(el)el.value=d[`${r.k}_${c.id}`]||d[`${r.k}_eR`]||'';
     });
-    // Fallback: legacy eR/eF/iR/iF keys
-    ['eR','eF','iR','iF'].forEach(old=>{
-      const mapping={'eR':'eR','eF':'eF','iR':'iR','iF':'iF'};
-      const el=document.getElementById(`ct-${r.k}-${old}`);
-      if(el&&d[`${r.k}_${old}`]&&!el.value)el.value=d[`${r.k}_${old}`];
-    });
+    // legacy fallback
+    const eEl=document.getElementById(`ct-${r.k}-e`);
+    const iEl=document.getElementById(`ct-${r.k}-i`);
+    if(eEl&&!eEl.value)eEl.value=d[`${r.k}_eR`]||d[`${r.k}_eF`]||'';
+    if(iEl&&!iEl.value)iEl.value=d[`${r.k}_iR`]||d[`${r.k}_iF`]||'';
   });
 }
 
 function clearCT(){
   CT_ROWS.forEach(r=>{
     ctCols.forEach(c=>{
-      ['R','F'].forEach(rf=>{
-        const el=document.getElementById(`ct-${r.k}-${c.id}${rf}`);
-        if(el)el.value='';
-      });
+      const el=document.getElementById(`ct-${r.k}-${c.id}`);
+      if(el)el.value='';
     });
   });
 }
