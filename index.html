@@ -1404,13 +1404,18 @@ function setCT(d){
   CT_ROWS.forEach(r=>{
     ctCols.forEach(c=>{
       const el=document.getElementById(`ct-${r.k}-${c.id}`);
-      if(el)el.value=d[`${r.k}_${c.id}`]||d[`${r.k}_eR`]||'';
+      if(!el)return;
+      // 새 키 형식 먼저, 없으면 legacy eR/eF/iR/iF에서 매핑
+      if(d[`${r.k}_${c.id}`]){
+        el.value=d[`${r.k}_${c.id}`];
+      } else if(c.id==='e'){
+        el.value=d[`${r.k}_eR`]||d[`${r.k}_eF`]||'';
+      } else if(c.id==='i'){
+        el.value=d[`${r.k}_iR`]||d[`${r.k}_iF`]||'';
+      } else {
+        el.value=d[`${r.k}_${c.id}R`]||d[`${r.k}_${c.id}F`]||'';
+      }
     });
-    // legacy fallback
-    const eEl=document.getElementById(`ct-${r.k}-e`);
-    const iEl=document.getElementById(`ct-${r.k}-i`);
-    if(eEl&&!eEl.value)eEl.value=d[`${r.k}_eR`]||d[`${r.k}_eF`]||'';
-    if(iEl&&!iEl.value)iEl.value=d[`${r.k}_iR`]||d[`${r.k}_iF`]||'';
   });
 }
 
