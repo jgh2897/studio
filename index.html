@@ -919,6 +919,7 @@ const CT_ROWS=[
   {k:'coolant',l:'Coolant'},{k:'ct',l:'Cycle Time (sec)'},{k:'tl',l:'Tool Life'},{k:'corner',l:'Corner / EA'},
   {k:'remark',l:'Remark'},
 ];
+let ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
 const CAT_LBL={test:'⚙️ 테스트레포트',meet:'🤝 고객사협의',prop:'📋 제안서'};
 const CAT_COL={test:'var(--amber)',meet:'var(--teal)',prop:'var(--violet)'};
 const PT_LBL={tooling:'🔧 Tooling',retooling:'🔄 RE-Tooling',process:'⚡ 공정개선'};
@@ -1340,7 +1341,6 @@ function setResult(r,el){curResult=r;document.querySelectorAll('[id^="rs-"]').fo
 function setPropStat(s,el){curPropStat=s;document.querySelectorAll('[id^="ps-"]').forEach(e=>e.className='stat-btn');el.className=`stat-btn on-${s}`;}
 function pickPT(el){document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');el.className='pt-btn on';curPropType=el.dataset.pt;}
 // ── 동적 CT 테이블 ──
-let ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
 
 function buildCT(){
   renderCtHead();
