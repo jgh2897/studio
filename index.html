@@ -1585,7 +1585,7 @@ async function extractAndFill(b64url){
 \`\`\`
 JSON 후 이미지 전체 텍스트를 그대로 출력하세요.`}]}]);
     const jm=raw.match(/```json\s*([\s\S]*?)```/);
-    if(jm){try{const j=JSON.parse(jm[1]);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.ct_table)setCT(j.ct_table);if(j.ct_old)document.getElementById('c-old').value=j.ct_old;if(j.ct_new)document.getElementById('c-new').value=j.ct_new;if(j.cpp)document.getElementById('c-cpp').value=j.cpp;if(j.saving)document.getElementById('c-save').value=j.saving;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}
+    if(jm){try{const j=JSON.parse(jm[1]);if(j.title&&!document.getElementById('f-title').value){document.getElementById('f-title').value=j.title;chkSave();}if(j.customer)document.getElementById('f-cust').value=j.customer;if(j.ct_table){clearCT();setCT(j.ct_table);}if(j.ct_old)document.getElementById('c-old').value=j.ct_old;if(j.ct_new)document.getElementById('c-new').value=j.ct_new;if(j.cpp)document.getElementById('c-cpp').value=j.cpp;if(j.saving)document.getElementById('c-save').value=j.saving;if(j.summary)document.getElementById('f-summary').value=j.summary;if(j.machine){const el=document.getElementById('m-machine');if(el)el.value=j.machine;}
 if(j.material){const el=document.getElementById('m-mat');if(el)el.value=j.material;}
 if(j.part){const el=document.getElementById('m-part');if(el)el.value=j.part;}
 if(j.industry){const el=document.getElementById('m-ind');if(el)el.value=j.industry;}
