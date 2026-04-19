@@ -508,9 +508,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
   <div class="doc-list" id="doc-list"></div>
   <div class="sb-foot">
     <div class="new-btns">
-      <button class="btn btn-ghost btn-xs" style="justify-content:center;border-color:var(--amber);color:var(--amber)" onclick="newDoc('test')">⚙ 테스트</button>
-      <button class="btn btn-ghost btn-xs" style="justify-content:center;border-color:var(--teal);color:var(--teal)" onclick="newDoc('meet')">🤝 협의</button>
-      <button class="btn btn-ghost btn-xs" style="justify-content:center;border-color:var(--violet);color:var(--violet)" onclick="newDoc('prop')">📋 제안서</button>
+      <button class="btn btn-ghost btn-xs" style="justify-content:center;grid-column:1/-1;border-color:var(--amber);color:var(--amber)" onclick="newDoc()">📄 + 새 업무일지</button>
     </div>
   </div>
 </aside>
@@ -525,15 +523,44 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
     <button class="btn btn-ghost btn-sm" onclick="cancelP1()">취소</button>
     <button class="btn btn-amber btn-sm" id="btn-save" onclick="saveDoc()" disabled>저장 →</button>
   </div>
-  <div id="cat-select" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text2)">문서 유형을 선택하세요</div>
-    <div class="cat-cards">
-      <div class="cc cc-test" onclick="selectCat('test')"><div class="cc-ico">⚙️</div><div class="cc-lbl" style="color:var(--amber)">테스트 레포트</div><div class="cc-desc">굿노트 가공 테스트<br>이미지 → AI 자동 추출</div></div>
-      <div class="cc cc-meet" onclick="selectCat('meet')"><div class="cc-ico">🤝</div><div class="cc-lbl" style="color:var(--teal)">고객사 협의</div><div class="cc-desc">굿노트 미팅 기록<br>이미지 → AI 자동 추출</div></div>
-      <div class="cc cc-prop" onclick="selectCat('prop')"><div class="cc-ico">📋</div><div class="cc-lbl" style="color:var(--violet)">제안서</div><div class="cc-desc">PPTX·이미지 업로드<br>AI 분류 → 슬라이드 뷰어</div></div>
+  <!-- PDF 업로드 메인 화면 -->
+  <div id="cat-select" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:36px">
+    <div style="text-align:center">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:.06em;color:var(--text);margin-bottom:4px">일일업무일지 업로드</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">PDF 업로드 → AI 자동 분석·분류 → 확인 후 저장</div>
+    </div>
+    <!-- 메인 드롭존 -->
+    <div id="main-dz" style="width:100%;max-width:480px;border:2px dashed var(--border2);border-radius:12px;background:var(--surf);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s"
+      onclick="document.getElementById('main-pdf-input').click()"
+      ondragover="mainDzOver(event)" ondragleave="mainDzLeave()" ondrop="mainDzDrop(event)">
+      <input type="file" id="main-pdf-input" accept=".pdf" style="display:none" onchange="mainHandlePDF(event)">
+      <div style="font-size:42px;margin-bottom:10px">📄</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;margin-bottom:4px">PDF 드래그 또는 클릭</div>
+      <div style="font-size:10px;color:var(--text3)">일일업무일지 (2026 양식) · AI가 테스트/협의 자동 구분</div>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:10px">
+        <span style="padding:2px 8px;border-radius:2px;font-size:8px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border2);color:var(--text3)">PDF</span>
+      </div>
+    </div>
+    <!-- 제안서는 별도 -->
+    <div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:center">
+      제안서(PPTX)는 → <span style="color:var(--violet);cursor:pointer;text-decoration:underline" onclick="selectCat('prop')">직접 입력</span>
     </div>
   </div>
   <div id="form-area" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+    <!-- ── 검증 결과 패널 (PDF 분석 후 표시) ── -->
+    <div id="verify-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div style="background:var(--surf);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <div style="font-family:'Barlow Condensed',monospace;font-size:12px;font-weight:700;letter-spacing:.04em;flex:1">
+          📋 추출 결과 확인 — 빨간 항목은 AI가 불확실하다고 판단한 값입니다
+        </div>
+        <div id="verify-type-badge" style="font-size:9px;padding:2px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace"></div>
+        <button class="btn btn-ghost btn-sm" onclick="reRunAnalysis()">🔄 재분석</button>
+        <button class="btn btn-amber btn-sm" onclick="confirmAndSave()">✅ 확인 후 저장</button>
+      </div>
+      <div id="verify-body" style="flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    </div>
+    <!-- ── 기존 폼 (직접 입력용) ── -->
+    <div id="manual-form" style="display:none;flex:1;flex-direction:column;overflow:hidden">
     <div class="two-col">
       <div class="col col-l">
         <div>
@@ -666,7 +693,8 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
         </div>
       </div>
     </div>
-  </div>
+    </div><!-- /manual-form -->
+  </div><!-- /form-area -->
 </div>
 
 <!-- ══ P2: VIEW ══ -->
@@ -918,6 +946,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 let docs = JSON.parse(localStorage.getItem('iscar-rs4')||'[]');
 let cid=null, curCat='all', activeCat=null, curResult='ok', curPropStat='applied', curPropType='tooling', pptStyle='summary', weeklyStyle='formal', pptTxt='', weeklyTxt='', img64=null, pptxSlides=[];
 let wPDFs=[];  // [{name, b64}] — 주간보고용 PDF 업로드
+let _lastWeeklyReport=null; // docx 생성용
 
 const CT_ROWS=[
   {k:'brand',l:'Brand'},{k:'holder',l:'Holder'},{k:'insert',l:'Insert'},{k:'grade',l:'Grade'},
@@ -1346,13 +1375,14 @@ function renderSB(q=''){
   }).join('');
 }
 function selDoc(id){cid=id;renderSB();renderView(id);goP('p2');}
-function newDoc(cat){if(cat)selectCat(cat);else{cid=null;img64=null;activeCat=null;showCatSel();goP('p1');}}
-function showCatSel(){document.getElementById('cat-select').style.display='';document.getElementById('form-area').style.display='none';document.getElementById('p1-title').textContent='① 신규 문서 입력';document.getElementById('btn-save').disabled=true;}
 function selectCat(cat){
   activeCat=cat;cid=null;img64=null;pptxSlides=[];curResult='ok';curPropStat='applied';curPropType='tooling';
   document.getElementById('cat-select').style.display='none';
   document.getElementById('form-area').style.display='flex';
   document.getElementById('form-area').style.flexDirection='column';
+  document.getElementById('verify-panel').style.display='none';
+  document.getElementById('manual-form').style.display='flex';
+  document.getElementById('manual-form').style.flexDirection='column';
   ['f-title','f-cust','f-author','f-extracted','f-summary','m-machine','m-spindle','m-part','m-mat','m-ind','m-proc','cl-att','cl-ag','cl-res','cl-act','pr-tool','pr-effect','f-prop-ext','c-old','c-new','c-cpp','c-save'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('f-date').value=tod();
   document.getElementById('prev').style.display='none';
@@ -1370,18 +1400,397 @@ function selectCat(cat){
   const psEl=document.getElementById('ps-applied');if(psEl)psEl.className='stat-btn on-applied';
   document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');
   const ptEl=document.querySelector('[data-pt="tooling"]');if(ptEl)ptEl.className='pt-btn on';
-  const titles={test:'① 테스트 레포트 입력',meet:'① 고객사 협의 입력',prop:'① 제안서 입력'};
+  const titles={test:'① 테스트 레포트 직접 입력',meet:'① 협의 기록 직접 입력',prop:'① 제안서 입력'};
   document.getElementById('p1-title').textContent=titles[cat]||'① 신규 입력';
   if(cat==='prop'){document.getElementById('dz-ico').textContent='📊';document.getElementById('dz-ttl').textContent='제안서 파일 선택';document.getElementById('dz-sub').textContent='PPTX 또는 이미지를 업로드하세요';document.getElementById('dz-types').innerHTML='<span class="dz-type-chip">PPTX</span><span class="dz-type-chip">JPG</span><span class="dz-type-chip">PNG</span>';document.getElementById('fi').accept='image/*,.pptx';}
   else{document.getElementById('dz-ico').textContent='📸';document.getElementById('dz-ttl').textContent='굿노트 캡처 이미지';document.getElementById('dz-sub').textContent='클릭 또는 드래그 앤 드롭';document.getElementById('dz-types').innerHTML='<span class="dz-type-chip">JPG</span><span class="dz-type-chip">PNG</span>';document.getElementById('fi').accept='image/*';}
   document.getElementById('btn-save').disabled=true;
   renderSB();goP('p1');
 }
-function cancelP1(){if(docs.length){if(!cid)cid=docs[docs.length-1].id;renderView(cid);goP('p2');}else showCatSel();}
+function cancelP1(){if(docs.length){if(!cid)cid=docs[docs.length-1].id;renderView(cid);goP('p2');}else{showMainDZ();goP('p1');}}
 function chkSave(){document.getElementById('btn-save').disabled=!document.getElementById('f-title').value.trim();}
 function setResult(r,el){curResult=r;document.querySelectorAll('[id^="rs-"]').forEach(e=>e.className='stat-btn');el.className=`stat-btn on-${r==='ok'?'ok':r==='ng'?'ng':'wip'}`;}
 function setPropStat(s,el){curPropStat=s;document.querySelectorAll('[id^="ps-"]').forEach(e=>e.className='stat-btn');el.className=`stat-btn on-${s}`;}
 function pickPT(el){document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');el.className='pt-btn on';curPropType=el.dataset.pt;}
+
+// ── 메인 드롭존 ──
+function showMainDZ(){
+  document.getElementById('cat-select').style.display='flex';
+  document.getElementById('form-area').style.display='none';
+}
+function mainDzOver(e){e.preventDefault();document.getElementById('main-dz').style.borderColor='var(--amber)';document.getElementById('main-dz').style.background='rgba(240,160,32,.04)';}
+function mainDzLeave(){document.getElementById('main-dz').style.borderColor='var(--border2)';document.getElementById('main-dz').style.background='var(--surf)';}
+function mainDzDrop(e){e.preventDefault();mainDzLeave();const f=e.dataTransfer.files[0];if(f&&f.name.toLowerCase().endsWith('.pdf'))startPDFAnalysis(f);else toast('PDF 파일만 가능합니다','err');}
+function mainHandlePDF(e){const f=e.target.files[0];if(f)startPDFAnalysis(f);e.target.value='';}
+
+// ── PDF 분석 시작 ──
+let _lastPDFFile=null;
+async function startPDFAnalysis(file){
+  _lastPDFFile=file;
+  // 로딩 화면 표시
+  document.getElementById('cat-select').style.display='none';
+  document.getElementById('form-area').style.display='flex';
+  document.getElementById('verify-panel').style.display='flex';
+  document.getElementById('manual-form').style.display='none';
+  document.getElementById('btn-save').disabled=true;
+  document.getElementById('p1-title').textContent='① AI 분석 중...';
+  document.getElementById('verify-body').innerHTML=`
+    <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;color:var(--text3)">
+      <div style="font-size:36px">📄</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2)">"${file.name}" 분석 중...</div>
+      <div style="display:flex;flex-direction:column;gap:6px;text-align:left;width:260px">
+        <div id="step1" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--amber)">▶ 1단계: PDF 데이터 추출</div>
+        <div id="step2" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3)">○ 2단계: 자체 검증 및 오류 플래그</div>
+        <div id="step3" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3)">○ 3단계: 결과 렌더링</div>
+      </div>
+    </div>`;
+
+  try{
+    const b64=await fileToB64(file);
+
+    // ── 1단계: 추출 ──
+    const sys1=`당신은 ISCAR Korea 일일업무일지(현장기록지) 전문 분석 AI입니다.
+PDF에서 모든 데이터를 정확히 추출하여 JSON으로 반환하세요.
+손글씨 주의사항: 0↔O, 1↔I↔l, 6↔G, 8↔B 혼동 가능.
+반드시 순수 JSON만 출력하세요 (백틱, 마크다운 없이).
+
+중요 추출 규칙:
+- Customer/고객사 필드가 비어있으면 DISCUSSION/NOTES 내용이나 문서 전체에서 유추하세요
+- Engineer/담당자 필드가 비어있어도 괜찮습니다
+- 절삭조건 표에 열이 여러 개(Plunging/Shouldering 등)인 경우: 기존 열들은 모두 "_e"에, ISCAR 열들은 모두 "_i"에 대표값으로 정리하세요
+- DC 앞의 ø 기호는 제거하고 숫자만 기입하세요 (예: ø20.0 → 20.0)
+- 열이 기존/ISCAR 구분이 명확하지 않으면 왼쪽=기존(_e), 오른쪽=ISCAR(_i)로 처리하세요
+- doc_type: CUTTING CONDITION 표가 있으면 "test", 협의 내용/회의록이면 "meet"
+- 숫자 수치는 이미지를 주의 깊게 보고 정확히 읽으세요 (예: /o.o → 10.0, /,600 → 1,600)
+
+JSON 구조:
+{
+  "doc_type": "test 또는 meet",
+  "date": "YYYY-MM-DD",
+  "customer": "고객사명 (비어있으면 NOTES에서 추출)",
+  "engineer": "담당자명 (비어있으면 빈 문자열)",
+  "industry": "산업분류",
+  "part": "부품명",
+  "material": "소재코드(S45C, SCM440 등, 장비규격 아님)",
+  "process": "공정명",
+  "machine": "장비 브랜드+모델",
+  "spindle": "스핀들/척 규격",
+  "power": "kW",
+  "max_rpm": "최대RPM",
+  "ct": {
+    "brand_e": "기존 브랜드", "brand_i": "ISCAR",
+    "holder_e": "", "holder_i": "",
+    "insert_e": "", "insert_i": "",
+    "grade_e": "", "grade_i": "",
+    "dc_e": "직경(숫자만)", "dc_i": "직경(숫자만)",
+    "vc_e": "", "vc_i": "",
+    "rpm_e": "", "rpm_i": "",
+    "fz_e": "", "fz_i": "",
+    "teeth_e": "", "teeth_i": "",
+    "f_e": "", "f_i": "",
+    "ae_e": "", "ae_i": "",
+    "ap_e": "", "ap_i": "",
+    "coolant_e": "", "coolant_i": "",
+    "ct_e": "", "ct_i": "",
+    "tl_e": "Tool Life (기존)", "tl_i": "Tool Life (ISCAR)",
+    "corner_e": "", "corner_i": "",
+    "remark_e": "", "remark_i": ""
+  },
+  "discussion": "DISCUSSION/NOTES 전체 내용",
+  "result": "RESULT 전체 내용",
+  "summary": "핵심 요약 번호목록 (1. xxx\\n2. xxx)",
+  "attendees": "참석자 (meet인 경우)",
+  "agenda": "협의 안건 (meet인 경우)",
+  "meet_result": "협의 결과 (meet인 경우)",
+  "next_action": "다음 액션 (meet인 경우)"
+}`;
+
+    const res1=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,system:sys1,
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+          {type:'text',text:'이 일일업무일지 PDF에서 모든 데이터를 추출하세요. JSON만 출력.'}
+        ]}]})
+    });
+    const d1=await res1.json();
+    if(d1.error)throw new Error(d1.error.message);
+    const raw1=d1.content.map(c=>c.text||'').join('');
+    const extracted=JSON.parse(raw1.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim());
+
+    // step2 활성화
+    document.getElementById('step1').style.color='var(--ok)';
+    document.getElementById('step1').textContent='✓ 1단계: 추출 완료';
+    document.getElementById('step2').style.color='var(--amber)';
+    document.getElementById('step2').textContent='▶ 2단계: 자체 검증 중...';
+
+    // ── 2단계: 검증 ──
+    const sys2=`당신은 ISCAR 절삭 데이터 검증 전문가입니다.
+추출된 데이터를 검토하여 의심스러운 값에 플래그를 달아주세요.
+반드시 순수 JSON만 출력하세요.
+
+의심 기준:
+- 손글씨 OCR 오류 가능성 (0/O, 1/I/l, 6/G, 8/B 혼동)
+- /o.o 같은 패턴은 10.0일 가능성 높음
+- /,600 같은 패턴은 1,600일 가능성 높음  
+- 알파벳 혼입된 숫자 (예: "w 3", "Jo|", "Jol" 등)
+- 물리적으로 불합리한 수치:
+  * 밀링 Vc: 보통 50~400 m/min (500 초과면 의심)
+  * 터닝 Vc: 보통 80~350 m/min
+  * RPM: 보통 500~8000
+  * fz: 보통 0.01~0.5 mm/tooth
+  * F(이송): 보통 50~3000 mm/min (5000 초과면 의심)
+- 공구코드 패턴 이상 (ISCAR 코드는 영숫자 조합)
+- 필수 필드 비어있음 (customer, material, vc, rpm 등)
+- Tool Life가 MX/MQ 구분 안 된 경우
+
+JSON 구조 (flags 배열에 의심 항목):
+{
+  "flags": [
+    {"field": "필드명 (예: ct.f_e)", "value": "현재값", "reason": "의심 이유", "suggestion": "추정 정값 또는 빈문자열"}
+  ],
+  "doc_type_confidence": "high 또는 low",
+  "overall_note": "전체 품질 평가 1문장"
+}`;
+
+    const res2=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:sys2,
+        messages:[{role:'user',content:`다음 추출 데이터를 검증하세요:\n${JSON.stringify(extracted,null,2)}\n\nJSON만 출력.`}]})
+    });
+    const d2=await res2.json();
+    if(d2.error)throw new Error(d2.error.message);
+    const raw2=d2.content.map(c=>c.text||'').join('');
+    const verified=JSON.parse(raw2.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim());
+
+    document.getElementById('step2').style.color='var(--ok)';
+    document.getElementById('step2').textContent='✓ 2단계: 검증 완료';
+    document.getElementById('step3').style.color='var(--amber)';
+    document.getElementById('step3').textContent='▶ 3단계: 렌더링 중...';
+
+    // ── 3단계: 렌더링 ──
+    renderVerifyPanel(extracted, verified, file.name);
+    document.getElementById('step3').style.color='var(--ok)';
+    document.getElementById('step3').textContent='✓ 3단계: 완료';
+    document.getElementById('p1-title').textContent='① 추출 결과 확인';
+    toast(`분석 완료 — 의심항목 ${(verified.flags||[]).length}개`,'ok');
+
+  }catch(e){
+    document.getElementById('verify-body').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ng)">
+      <div style="font-size:28px;margin-bottom:10px">❌</div>
+      <div style="font-size:12px;margin-bottom:12px">분석 실패: ${e.message}</div>
+      <button class="btn btn-ghost" onclick="showMainDZ();goP('p1')">← 돌아가기</button>
+    </div>`;
+    toast('분석 실패: '+e.message,'err');
+  }
+}
+
+function fileToB64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=ev=>res(ev.target.result.split(',')[1]);
+    r.onerror=()=>rej(new Error('파일 읽기 실패'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ── 검증 결과 렌더링 ──
+let _extractedData=null;
+function renderVerifyPanel(data, verified, filename){
+  _extractedData={...data, _filename:filename};
+  const flags=verified.flags||[];
+  const flagMap={};
+  flags.forEach(f=>flagMap[f.field]=f);
+
+  // 문서 유형 뱃지
+  const typeEl=document.getElementById('verify-type-badge');
+  const isTest=data.doc_type==='test';
+  typeEl.textContent=isTest?'⚙️ 테스트 레포트':'🤝 고객사 협의';
+  typeEl.style.background=isTest?'rgba(240,160,32,.15)':'rgba(34,184,176,.15)';
+  typeEl.style.color=isTest?'var(--amber)':'var(--teal)';
+  if(verified.doc_type_confidence==='low'){
+    typeEl.textContent+=' ⚠️';typeEl.style.background='rgba(239,68,68,.15)';typeEl.style.color='var(--ng)';
+  }
+
+  // 전체 노트
+  let html='';
+  if(verified.overall_note){
+    html+=`<div style="grid-column:1/-1;background:var(--surf2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace">
+      💡 ${verified.overall_note} · 의심항목 <span style="color:${flags.length?'var(--ng)':'var(--ok)'};font-weight:700">${flags.length}개</span>
+    </div>`;
+  }
+
+  // 기본정보 섹션
+  html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">기본 정보</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+
+  const basicFields=[
+    {key:'date',label:'날짜',id:'v-date'},
+    {key:'customer',label:'고객사',id:'v-customer'},
+    {key:'engineer',label:'담당자(Engineer)',id:'v-engineer'},
+    {key:'industry',label:'산업',id:'v-industry'},
+    {key:'part',label:'부품명',id:'v-part'},
+    {key:'material',label:'소재',id:'v-material'},
+    {key:'process',label:'공정',id:'v-process'},
+    {key:'machine',label:'장비',id:'v-machine'},
+    {key:'spindle',label:'스핀들',id:'v-spindle'},
+    {key:'power',label:'출력(kW)',id:'v-power'},
+    {key:'max_rpm',label:'Max RPM',id:'v-max_rpm'},
+  ];
+
+  basicFields.forEach(f=>{
+    const flagged=flagMap[f.key];
+    html+=renderVerifyField(f.label, f.id, data[f.key]||'', flagged);
+  });
+  html+=`</div></div>`;
+
+  // 협의 전용 필드
+  if(data.doc_type==='meet'){
+    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--teal);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">협의 정보</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+    [{key:'attendees',label:'참석자',id:'v-attendees'},{key:'agenda',label:'협의 안건',id:'v-agenda'},{key:'meet_result',label:'협의 결과',id:'v-meet_result'},{key:'next_action',label:'다음 액션',id:'v-next_action'}].forEach(f=>{
+      html+=renderVerifyField(f.label,f.id,data[f.key]||'',flagMap[f.key]);
+    });
+    html+=`</div></div>`;
+  }
+
+  // 절삭조건 (test만)
+  if(data.doc_type==='test'&&data.ct){
+    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">절삭 조건 비교</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9.5px">
+    <thead><tr>
+      <th style="background:var(--surf3);padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text2);border-bottom:1px solid var(--border2)">항목</th>
+      <th style="background:var(--surf3);padding:5px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text2);border-bottom:1px solid var(--border2)">기존</th>
+      <th style="background:var(--surf3);padding:5px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--amber);border-bottom:1px solid var(--border2)">ISCAR</th>
+    </tr></thead><tbody>`;
+
+    const ctRows=[
+      {k:'brand',l:'Brand'},{k:'holder',l:'Holder'},{k:'insert',l:'Insert'},{k:'grade',l:'Grade'},
+      {k:'dc',l:'DC (mm)'},{k:'vc',l:'Vc (m/min)'},{k:'rpm',l:'N (RPM)'},{k:'fz',l:'fz (mm/t)'},
+      {k:'teeth',l:'날수'},{k:'f',l:'F (mm/min)'},{k:'ae',l:'Ae (mm)'},{k:'ap',l:'Ap (mm)'},
+      {k:'coolant',l:'Coolant'},{k:'ct',l:'C/T (sec)'},{k:'tl',l:'Tool Life'},{k:'corner',l:'Corner/EA'},{k:'remark',l:'Remark'}
+    ];
+    ctRows.forEach(r=>{
+      const ve=data.ct[`${r.k}_e`]||'';
+      const vi=data.ct[`${r.k}_i`]||'';
+      if(!ve&&!vi)return;
+      const feFlag=flagMap[`ct.${r.k}_e`]||flagMap[`${r.k}_e`];
+      const fiFlag=flagMap[`ct.${r.k}_i`]||flagMap[`${r.k}_i`];
+      html+=`<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text2);background:var(--surf2);white-space:nowrap">${r.l}</td>
+        <td style="padding:3px 4px;text-align:center">${renderCTInput(`vct-${r.k}-e`,ve,feFlag)}</td>
+        <td style="padding:3px 4px;text-align:center">${renderCTInput(`vct-${r.k}-i`,vi,fiFlag)}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  }
+
+  // 요약
+  html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">요약 / 특이사항</div>
+    <textarea id="v-summary" style="width:100%;min-height:80px;background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:7px;font-size:10.5px;color:var(--text);font-family:'Noto Sans KR',sans-serif;resize:vertical">${data.summary||data.discussion||''}</textarea>
+  </div>`;
+
+  document.getElementById('verify-body').innerHTML=html;
+}
+
+function renderVerifyField(label, id, value, flagged){
+  const isFlagged=!!flagged;
+  const borderColor=isFlagged?'var(--ng)':'var(--border)';
+  const bgColor=isFlagged?'rgba(239,68,68,.06)':'var(--surf2)';
+  const tooltip=isFlagged?`title="${flagged.reason}${flagged.suggestion?' → 추정: '+flagged.suggestion:''}"`:'' ;
+  return `<div style="display:flex;flex-direction:column;gap:3px" ${tooltip}>
+    <label style="font-size:8px;color:${isFlagged?'var(--ng)':'var(--text3)'};font-family:'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:4px">
+      ${label}${isFlagged?` <span style="color:var(--ng)">⚠ ${flagged.reason.slice(0,30)}</span>`:''}
+    </label>
+    <input id="${id}" value="${(value||'').replace(/"/g,'&quot;')}" style="background:${bgColor};border:1px solid ${borderColor};border-radius:4px;padding:5px 7px;font-size:11px;color:${isFlagged?'var(--ng)':'var(--text)'};font-family:'Noto Sans KR',sans-serif;width:100%;outline:none">
+  </div>`;
+}
+
+function renderCTInput(id, value, flagged){
+  const isFlagged=!!flagged;
+  return `<input id="${id}" value="${(value||'').replace(/"/g,'&quot;')}"
+    style="background:${isFlagged?'rgba(239,68,68,.08)':'transparent'};border:1px solid ${isFlagged?'var(--ng)':'transparent'};border-radius:3px;padding:3px 5px;font-size:10px;color:${isFlagged?'var(--ng)':'var(--text)'};width:100%;text-align:center;font-family:'JetBrains Mono',monospace;outline:none"
+    ${isFlagged?`title="${flagged.reason}"`:''}
+    onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='${isFlagged?'var(--ng)':'transparent'}'">`;
+}
+
+async function reRunAnalysis(){
+  if(_lastPDFFile)await startPDFAnalysis(_lastPDFFile);
+}
+
+function confirmAndSave(){
+  if(!_extractedData){toast('분석 데이터 없음','err');return;}
+  const d=_extractedData;
+  const cat=d.doc_type==='meet'?'meet':'test';
+  activeCat=cat;cid=null;img64=null;pptxSlides=[];
+  curResult='ok';curPropStat='applied';curPropType='tooling';
+
+  // 검증 패널에서 수정된 값 읽기
+  const gv=id=>{const el=document.getElementById(id);return el?el.value.trim():'';}
+
+  // 폼 채우기
+  const title=`${gv('v-customer')||d.customer||''} – ${gv('v-part')||d.part||''} ${gv('v-process')||d.process||''}`.trim();
+  document.getElementById('f-title').value=title||'새 문서';
+  document.getElementById('f-date').value=gv('v-date')||d.date||tod();
+  document.getElementById('f-cust').value=gv('v-customer')||d.customer||'';
+  document.getElementById('f-author').value=gv('v-engineer')||d.engineer||d.author||'';
+  document.getElementById('f-summary').value=gv('v-summary')||d.summary||'';
+
+  if(cat==='test'){
+    document.getElementById('m-machine').value=gv('v-machine')||d.machine||'';
+    document.getElementById('m-spindle').value=gv('v-spindle')||d.spindle||'';
+    document.getElementById('m-part').value=gv('v-part')||d.part||'';
+    document.getElementById('m-mat').value=gv('v-material')||d.material||'';
+    document.getElementById('m-ind').value=gv('v-industry')||d.industry||'';
+    document.getElementById('m-proc').value=gv('v-process')||d.process||'';
+    // CT 테이블 채우기
+    if(d.ct){
+      const ctRows=['brand','holder','insert','grade','dc','vc','rpm','fz','teeth','f','ae','ap','coolant','ct','tl','corner','remark'];
+      const ctKeyMap={brand:'brand',holder:'holder',insert:'insert',grade:'grade',dc:'dc',vc:'vc',rpm:'rpm',fz:'fz',teeth:'zeff',f:'f',ae:'ae',ap:'ap',coolant:'coolant',ct:'ct',tl:'tl',corner:'corner',remark:'remark'};
+      ctRows.forEach(k=>{
+        const ctKey=ctKeyMap[k]||k;
+        const eEl=document.getElementById(`ct-${ctKey}-e`);
+        const iEl=document.getElementById(`ct-${ctKey}-i`);
+        const ve=document.getElementById(`vct-${k}-e`);
+        const vi=document.getElementById(`vct-${k}-i`);
+        if(eEl&&ve)eEl.value=ve.value||d.ct[`${k}_e`]||d.ct[`${k}_eR`]||'';
+        if(iEl&&vi)iEl.value=vi.value||d.ct[`${k}_i`]||d.ct[`${k}_iR`]||'';
+      });
+    }
+  } else if(cat==='meet'){
+    document.getElementById('cl-att').value=gv('v-attendees')||d.attendees||'';
+    document.getElementById('cl-ag').value=gv('v-agenda')||d.agenda||'';
+    document.getElementById('cl-res').value=gv('v-meet_result')||d.meet_result||'';
+    document.getElementById('cl-act').value=gv('v-next_action')||d.next_action||'';
+  }
+
+  // 검증 패널 숨기고 폼 표시
+  document.getElementById('verify-panel').style.display='none';
+  document.getElementById('manual-form').style.display='flex';
+  document.getElementById('manual-form').style.flexDirection='column';
+  document.getElementById('form-area').style.display='flex';
+
+  // 필드 표시/숨김
+  document.getElementById('test-fields').style.display=cat==='test'?'':'none';
+  document.getElementById('meet-fields').style.display=cat==='meet'?'':'none';
+  document.getElementById('prop-fields').style.display='none';
+  document.getElementById('ct-area').style.display=cat==='test'?'':'none';
+  document.getElementById('ai-area').style.display='';
+  document.getElementById('prop-ai-area').style.display='none';
+
+  document.getElementById('btn-save').disabled=false;
+  document.getElementById('p1-title').textContent=cat==='test'?'① 테스트 레포트 확인':'① 협의 기록 확인';
+  chkSave();
+  toast('폼으로 이동 — 확인 후 저장하세요','ok');
+}
+
+function newDoc(cat){
+  cid=null;img64=null;activeCat=null;pptxSlides=[];
+  if(cat){selectCat(cat);}
+  else{showMainDZ();goP('p1');}
+}
 // ── 동적 CT 테이블 ──
 
 function buildCT(){
@@ -1901,6 +2310,7 @@ JSON만 출력하세요.`});
     const raw=data.content.map(c=>c.text||'').join('');
     let clean=raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
     const report=JSON.parse(clean);
+    _lastWeeklyReport=report;
     weeklyTxt=buildWeeklyTxt(report);
     renderWeeklyGN(report);
     document.getElementById('w-status').textContent=`완료 — ${(report.items||[]).length}개 항목`;
@@ -2011,6 +2421,213 @@ function buildWeeklyTxt(r){
 }
 function resetWeekly(){wPDFs=[];renderWPDFList();weeklyTxt='';document.getElementById('w5-vp').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:#907a60;font-size:13px"><div style="font-size:36px;opacity:.3">📓</div><div>설정 후 AI 생성을 눌러주세요</div></div>';document.getElementById('w-status').textContent='문서 선택 후 AI 생성';document.getElementById('btn-cp-w').disabled=true;document.getElementById('btn-dl-w').disabled=true;const pb=document.getElementById('btn-print-w');if(pb)pb.disabled=true;toast('초기화','ok');}
 function cpWeekly(){if(weeklyTxt)navigator.clipboard.writeText(weeklyTxt).then(()=>toast('복사됨','ok'));}
+
+async function dlWeekly(){
+  if(!weeklyTxt){toast('먼저 AI 생성을 해주세요','err');return;}
+  toast('docx 생성 중...','info');
+  try{
+    // docxjs CDN 로드
+    if(!window.docx){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/build/index.min.js');
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const D=window.docx;
+    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
+           WidthType,BorderStyle,ShadingType,AlignmentType,VerticalAlign,
+           HeadingLevel}=D;
+
+    // 현재 주간보고 데이터
+    const from=document.getElementById('w-from').value;
+    const to=document.getElementById('w-to').value;
+    const auth=document.getElementById('w-auth').value||'담당자';
+    const week=document.getElementById('w-week').value||'';
+
+    // 파싱 — weeklyTxt에서 report 재구성하거나 _lastWeeklyReport 사용
+    const r=_lastWeeklyReport;
+    if(!r){toast('보고서 데이터 없음, 재생성 필요','err');return;}
+
+    const border={style:BorderStyle.SINGLE,size:4,color:'C8B898'};
+    const borders={top:border,bottom:border,left:border,right:border};
+    const hdrBorder={style:BorderStyle.SINGLE,size:4,color:'1a1a2e'};
+    const hdrBorders={top:hdrBorder,bottom:hdrBorder,left:hdrBorder,right:hdrBorder};
+
+    // 페이지 너비: A4 11906 - 마진 1440*2 = 9026
+    const TW=9026;
+    const LW=1400; // 왼쪽 레이블 열
+    const RW=TW-LW; // 내용 열
+
+    function cell(text,opts={}){
+      const {w=RW,bold=false,shade='',color='000000',fontSize=18,labelCol=false,vAlign=VerticalAlign.TOP}=opts;
+      return new TableCell({
+        width:{size:w,type:WidthType.DXA},
+        borders,
+        shading:shade?{fill:shade,type:ShadingType.CLEAR}:{fill:'FFFFFF',type:ShadingType.CLEAR},
+        verticalAlign:vAlign,
+        margins:{top:60,bottom:60,left:100,right:100},
+        children:[new Paragraph({
+          children:[new TextRun({text:String(text||''),bold,color,size:fontSize,font:'Noto Sans KR'})],
+          alignment:labelCol?AlignmentType.CENTER:AlignmentType.LEFT
+        })]
+      });
+    }
+
+    function labelCell(text){
+      return new TableCell({
+        width:{size:LW,type:WidthType.DXA},
+        borders,
+        shading:{fill:'F0ECE0',type:ShadingType.CLEAR},
+        verticalAlign:VerticalAlign.TOP,
+        margins:{top:60,bottom:60,left:100,right:100},
+        children:[new Paragraph({
+          children:[new TextRun({text,bold:true,size:17,font:'Noto Sans KR',color:'333333'})],
+          alignment:AlignmentType.CENTER
+        })]
+      });
+    }
+
+    function multilineCell(text,w=RW){
+      const lines=(text||'').split('\n');
+      return new TableCell({
+        width:{size:w,type:WidthType.DXA},
+        borders,
+        shading:{fill:'FFFFFF',type:ShadingType.CLEAR},
+        verticalAlign:VerticalAlign.TOP,
+        margins:{top:60,bottom:60,left:100,right:100},
+        children:lines.map(line=>new Paragraph({
+          children:[new TextRun({text:line,size:18,font:'Noto Sans KR'})],
+          spacing:{after:20}
+        }))
+      });
+    }
+
+    // 섹션 헤더 셀 (기본정보/기존TOOL 등)
+    function sectionHeader(text,color='B03020'){
+      return new TableCell({
+        width:{size:TW,type:WidthType.DXA},
+        columnSpan:2,
+        borders,
+        shading:{fill:'FDF5F0',type:ShadingType.CLEAR},
+        margins:{top:40,bottom:40,left:120,right:120},
+        children:[new Paragraph({
+          children:[new TextRun({text,bold:true,size:16,font:'JetBrains Mono',color})]
+        })]
+      });
+    }
+
+    const children=[];
+
+    // 제목
+    children.push(new Paragraph({
+      children:[new TextRun({text:'7) 기술사원 업무 현황',bold:true,size:26,font:'Noto Sans KR',color:'1a1a2e'})],
+      spacing:{after:200}
+    }));
+    children.push(new Paragraph({
+      children:[new TextRun({text:`기간: ${from}${to&&from!==to?'~'+to:''} ${week}  담당: ${auth}`,size:18,font:'Noto Sans KR',color:'666666'})],
+      spacing:{after:280}
+    }));
+
+    // 각 항목
+    (r.items||[]).forEach((item,idx)=>{
+      // 항목 제목
+      children.push(new Paragraph({
+        children:[new TextRun({text:item.title||`${idx+1}) ${item.customer||''}`,bold:true,size:22,font:'Noto Sans KR',color:'B03020'})],
+        spacing:{before:200,after:80}
+      }));
+
+      // 장비현황/공구비/가공품 테이블
+      const infoRows=[];
+      if(item.machine_status)infoRows.push(new TableRow({children:[labelCell('장비현황'),multilineCell(item.machine_status)]}));
+      if(item.tool_cost)infoRows.push(new TableRow({children:[labelCell('공 구 비'),multilineCell(item.tool_cost)]}));
+      if(item.parts)infoRows.push(new TableRow({children:[labelCell('가 공 품'),multilineCell(item.parts)]}));
+
+      // 업무내용 행 (내부에 서브섹션들)
+      const workLines=[];
+
+      // 기본정보
+      workLines.push(new Paragraph({children:[new TextRun({text:'[기본정보]',bold:true,size:17,font:'Noto Sans KR',color:'B03020'})],spacing:{after:40}}));
+      if(item.part||item.material)workLines.push(new Paragraph({children:[new TextRun({text:`부품: ${item.part||''}  소재: ${item.material||''}`,size:18,font:'Noto Sans KR'})],spacing:{after:30}}));
+      if(item.machine)workLines.push(new Paragraph({children:[new TextRun({text:`장비: ${item.machine}`,size:18,font:'Noto Sans KR'})],spacing:{after:60}}));
+
+      // 기존 TOOL
+      if(item.existing_tool||item.existing_condition){
+        workLines.push(new Paragraph({children:[new TextRun({text:'[기존 TOOL 및 가공조건]',bold:true,size:17,font:'Noto Sans KR',color:'5A4A35'})],spacing:{before:60,after:40}}));
+        if(item.existing_tool)workLines.push(new Paragraph({children:[new TextRun({text:item.existing_tool,size:17,font:'Noto Sans KR'})],spacing:{after:30}}));
+        if(item.existing_condition)(item.existing_condition.split('\n')).forEach(l=>workLines.push(new Paragraph({children:[new TextRun({text:l,size:17,font:'Noto Sans KR'})],spacing:{after:20}})));
+        if(item.problem)workLines.push(new Paragraph({children:[new TextRun({text:`문제점: ${item.problem}`,bold:true,size:17,font:'Noto Sans KR',color:'B03020'})],spacing:{after:30}}));
+      }
+
+      // 이스카 TOOL
+      if(item.iscar_tool||item.iscar_condition){
+        workLines.push(new Paragraph({children:[new TextRun({text:'[이스카 TOOL 및 가공조건]',bold:true,size:17,font:'Noto Sans KR',color:'0D8A80'})],spacing:{before:60,after:40}}));
+        if(item.iscar_tool)workLines.push(new Paragraph({children:[new TextRun({text:item.iscar_tool,size:17,font:'Noto Sans KR'})],spacing:{after:30}}));
+        if(item.iscar_condition)(item.iscar_condition.split('\n')).forEach(l=>workLines.push(new Paragraph({children:[new TextRun({text:l,size:17,font:'Noto Sans KR'})],spacing:{after:20}})));
+      }
+
+      // 업무 내용
+      if(item.work_details){
+        workLines.push(new Paragraph({children:[new TextRun({text:'[업무 내용]',bold:true,size:17,font:'Noto Sans KR',color:'1A4DB5'})],spacing:{before:60,after:40}}));
+        item.work_details.split('\n').forEach(l=>workLines.push(new Paragraph({children:[new TextRun({text:l,size:17,font:'Noto Sans KR'})],spacing:{after:30}})));
+      }
+
+      // 효과금액
+      if(item.effect)workLines.push(new Paragraph({children:[new TextRun({text:`효과금액: ${item.effect.replace(/^효과금액:\s*/,'')}`,bold:true,size:18,font:'Noto Sans KR',color:'1A7A3E'})],spacing:{before:80,after:40}}));
+
+      const workCell=new TableCell({
+        width:{size:RW,type:WidthType.DXA},
+        borders,
+        shading:{fill:'FFFFFF',type:ShadingType.CLEAR},
+        verticalAlign:VerticalAlign.TOP,
+        margins:{top:80,bottom:80,left:120,right:120},
+        children:workLines
+      });
+
+      infoRows.push(new TableRow({children:[labelCell('업무내용'),workCell]}));
+
+      children.push(new Table({
+        width:{size:TW,type:WidthType.DXA},
+        columnWidths:[LW,RW],
+        rows:infoRows
+      }));
+      children.push(new Paragraph({children:[new TextRun('')],spacing:{after:160}}));
+    });
+
+    // 특이사항
+    if(r.notes){
+      children.push(new Paragraph({children:[new TextRun({text:'특이사항 / 다음 주 예정',bold:true,size:19,font:'Noto Sans KR',color:'5A4A35'})],spacing:{before:120,after:60}}));
+      r.notes.split('\n').forEach(l=>children.push(new Paragraph({children:[new TextRun({text:l,size:18,font:'Noto Sans KR'})],spacing:{after:40}})));
+    }
+
+    // 감사합니다
+    children.push(new Paragraph({
+      children:[new TextRun({text:'감사합니다.',bold:true,size:22,font:'Noto Sans KR',color:'1a1a2e'})],
+      alignment:AlignmentType.RIGHT,
+      spacing:{before:240}
+    }));
+
+    const doc=new Document({
+      sections:[{
+        properties:{page:{size:{width:11906,height:16838},margin:{top:1008,right:1008,bottom:1008,left:1008}}},
+        children
+      }]
+    });
+
+    const buf=await Packer.toBlob(doc);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(buf);
+    a.download=`주간업무보고_${auth}_${week||from}.docx`;
+    a.click();
+    toast('docx 다운로드 완료','ok');
+  }catch(e){
+    console.error(e);
+    toast('docx 생성 실패: '+e.message,'err');
+    // fallback to txt
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([weeklyTxt],{type:'text/plain;charset=utf-8'}));
+    a.download=`주간보고_${document.getElementById('w-auth').value||'담당자'}_${document.getElementById('w-week').value||tod()}.txt`;
+    a.click();
+    toast('txt로 대체 다운로드','info');
+  }
+}
 function printWeekly(){
   const vp=document.getElementById('w5-vp');
   if(!vp||!vp.innerHTML.includes('gn-book'))return;
@@ -2039,12 +2656,10 @@ function printWeekly(){
   w.document.close();
   setTimeout(()=>w.print(),500);
 }
-function dlWeekly(){if(!weeklyTxt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([weeklyTxt],{type:'text/plain;charset=utf-8'}));a.download=`주간보고_${document.getElementById('w-auth').value||'담당자'}_${document.getElementById('w-week').value||tod()}.txt`;a.click();toast('다운로드','ok');}
 function doExport(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(docs,null,2)],{type:'application/json'}));a.download=`iscar-rs4-${tod()}.json`;a.click();toast('백업 완료','ok');}
 function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!Array.isArray(imp))throw 0;if(!confirm(`${imp.length}개 가져옵니까?`))return;imp.forEach(d=>{if(!docs.find(x=>x.id===d.id))docs.push(d);});sv();renderSB();populateP3();populateWDocs();toast(`${imp.length}개 복원`,'ok');}catch{toast('복원 실패','err');}};r.readAsText(f);e.target.value='';}
 function toast(msg,type='info'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);}
 function getApiKey(){return localStorage.getItem('iscar-api-key')||'';}
-function getGHToken(){return localStorage.getItem('iscar-gh-token')||'';}
 function saveGHToken(v){
   localStorage.setItem('iscar-gh-token',v);
   const s=document.getElementById('gh-token-status');
