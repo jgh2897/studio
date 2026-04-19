@@ -1153,7 +1153,7 @@ JSON structure:
   ],
   "resultSummary":"full test result text as found in document, preserve Korean"
 }`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:await pdfToJpeg(file)}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
     const data=await res.json();
     const raw=data.content.map(c=>c.text||'').join('');
     const clean=raw.replace(/```json|```/g,'').trim();
@@ -2588,12 +2588,13 @@ N) 고객사명 – [업무 제목 (부품명/공정/개선 건)]
   "notes": "특이사항 또는 다음 주 예정"
 }`;
 
-    // Build content array — PDFs go in as documents, text context appended
+    // Build content array — PDFs → JPEG 변환 후 전송 (토큰 절감)
     const userContent=[];
-    // Add all PDFs
-    wPDFs.forEach(p=>{
-      userContent.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:p.b64}});
-    });
+    // Add all PDFs as JPEG images
+    for(const p of wPDFs){
+      const jpegB64=await pdfToJpeg(new File([Uint8Array.from(atob(p.b64),c=>c.charCodeAt(0))],p.name,{type:'application/pdf'}));
+      userContent.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:jpegB64}});
+    }
     // Add text context from app docs
     const docBlocks=selDocs.map((d,i)=>{let b=`[앱기록 ${i+1}] ${d.title} | ${d.date||'-'} | ${d.customer||'-'}`;if(d.cat==='test')b+=`\n장비:${d.machine||'-'} | 부품:${d.part||'-'} | 소재:${d.material||'-'}\n요약:${d.summary||'-'}`;return b.trim();}).join('\n\n');
     userContent.push({type:'text',text:`위 PDF(일일업무일지)를 분석하여 주간업무보고서를 작성하세요.
