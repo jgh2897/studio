@@ -524,22 +524,37 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
     <button class="btn btn-amber btn-sm" id="btn-save" onclick="saveDoc()" disabled>저장 →</button>
   </div>
   <!-- PDF 업로드 메인 화면 -->
-  <div id="cat-select" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:36px">
+  <div id="cat-select" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px">
     <div style="text-align:center">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:.06em;color:var(--text);margin-bottom:4px">일일업무일지 업로드</div>
-      <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">PDF 업로드 → AI 자동 분석·분류 → 확인 후 저장</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">PDF + 사진 함께 업로드 → AI 자동 분석·분류 → 확인 후 저장</div>
     </div>
     <!-- 메인 드롭존 -->
-    <div id="main-dz" style="width:100%;max-width:480px;border:2px dashed var(--border2);border-radius:12px;background:var(--surf);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s"
+    <div id="main-dz" style="width:100%;max-width:520px;border:2px dashed var(--border2);border-radius:12px;background:var(--surf);padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s"
       onclick="document.getElementById('main-pdf-input').click()"
       ondragover="mainDzOver(event)" ondragleave="mainDzLeave()" ondrop="mainDzDrop(event)">
       <input type="file" id="main-pdf-input" accept=".pdf" style="display:none" onchange="mainHandlePDF(event)">
-      <div style="font-size:42px;margin-bottom:10px">📄</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;margin-bottom:4px">PDF 드래그 또는 클릭</div>
+      <div style="font-size:36px;margin-bottom:8px">📄</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;margin-bottom:3px">PDF 드래그 또는 클릭</div>
       <div style="font-size:10px;color:var(--text3)">일일업무일지 (2026 양식) · AI가 테스트/협의 자동 구분</div>
-      <div style="display:flex;gap:6px;justify-content:center;margin-top:10px">
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:8px">
         <span style="padding:2px 8px;border-radius:2px;font-size:8px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border2);color:var(--text3)">PDF</span>
       </div>
+    </div>
+    <!-- 사진 업로드 -->
+    <div style="width:100%;max-width:520px">
+      <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">📸 사진 첨부 (선택) — AI가 자동 분류</div>
+      <div id="photo-dz" style="border:1px dashed var(--border);border-radius:8px;background:var(--surf2);padding:12px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px"
+        onclick="document.getElementById('main-photo-input').click()"
+        ondragover="photoDzOver(event)" ondragleave="photoDzLeave()" ondrop="photoDzDrop(event)">
+        <input type="file" id="main-photo-input" accept="image/*" multiple style="display:none" onchange="mainHandlePhotos(event)">
+        <div style="font-size:20px">🖼</div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--text2)">부품사진 · 마모사진 드래그 또는 클릭</div>
+          <div style="font-size:9px;color:var(--text3)">복수 선택 가능 · 자동 압축 · AI가 부품/마모 자동 구분</div>
+        </div>
+      </div>
+      <div id="photo-preview-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
     </div>
     <!-- 제안서는 별도 -->
     <div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:center">
@@ -657,7 +672,8 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
           <div class="slbl" style="display:flex;align-items:center;justify-content:space-between">
             <span>절삭 조건 비교</span>
             <div style="display:flex;gap:4px;align-items:center">
-              <button class="btn btn-ghost btn-sm" onclick="addCtCol()" style="font-size:9px;padding:2px 7px">+ 공정 추가</button>
+              <button class="btn btn-ghost btn-sm" onclick="addCtCol()" style="font-size:9px;padding:2px 7px">+ 열 추가</button>
+              <button class="btn btn-ghost btn-sm" onclick="addCtColGroup()" style="font-size:9px;padding:2px 7px">+ 그룹 추가</button>
               <button class="btn btn-ghost btn-sm" onclick="resetCtCols()" style="font-size:9px;padding:2px 7px">초기화</button>
             </div>
           </div>
@@ -955,7 +971,10 @@ const CT_ROWS=[
   {k:'coolant',l:'Coolant'},{k:'ct',l:'Cycle Time (sec)'},{k:'tl',l:'Tool Life'},{k:'corner',l:'Corner / EA'},
   {k:'remark',l:'Remark'},
 ];
-let ctCols=[{id:'e',label:'기존',iscar:false},{id:'i',label:'ISCAR',iscar:true}];
+// ctCols 구조: [{id, label, iscar, group}]
+// group: 같은 group 문자열을 가진 열들은 하나의 그룹 헤더 아래 묶임
+// 예: [{id:'e1',label:'Plunging',iscar:false,group:'기존'},{id:'e2',label:'Shouldering',iscar:false,group:'기존'},{id:'i1',label:'Plunging',iscar:true,group:'ISCAR'}]
+let ctCols=[{id:'e',label:'기존',iscar:false,group:''},{id:'i',label:'ISCAR',iscar:true,group:''}];
 const CAT_LBL={test:'⚙️ 테스트레포트',meet:'🤝 고객사협의',prop:'📋 제안서'};
 const CAT_COL={test:'var(--amber)',meet:'var(--teal)',prop:'var(--violet)'};
 const PT_LBL={tooling:'🔧 Tooling',retooling:'🔄 RE-Tooling',process:'⚡ 공정개선'};
@@ -1000,6 +1019,19 @@ let dbFiltered = [];
       if(files.length){
         files.forEach(f=>{const r=new FileReader();r.onload=ev=>{wPDFs.push({name:f.name,b64:ev.target.result.split(',')[1]});renderWPDFList();};r.readAsDataURL(f);});
       }
+    });
+  }
+  // Setup main-dz combined drop (PDF + 사진 동시 지원)
+  const mdz=document.getElementById('main-dz');
+  if(mdz){
+    mdz.addEventListener('drop',e=>{
+      e.preventDefault();mainDzLeave();
+      const allFiles=[...e.dataTransfer.files];
+      const pdfs=allFiles.filter(f=>f.name.toLowerCase().endsWith('.pdf'));
+      const imgs=allFiles.filter(f=>f.type.startsWith('image/'));
+      if(imgs.length)processPhotos(imgs);
+      if(pdfs.length)startPDFAnalysis(pdfs[0]);
+      else if(!pdfs.length&&!imgs.length)toast('PDF 또는 이미지 파일을 올려주세요','err');
     });
   }
 })();
@@ -1420,11 +1452,92 @@ function showMainDZ(){
 }
 function mainDzOver(e){e.preventDefault();document.getElementById('main-dz').style.borderColor='var(--amber)';document.getElementById('main-dz').style.background='rgba(240,160,32,.04)';}
 function mainDzLeave(){document.getElementById('main-dz').style.borderColor='var(--border2)';document.getElementById('main-dz').style.background='var(--surf)';}
+function photoDzOver(e){e.preventDefault();document.getElementById('photo-dz').style.borderColor='var(--amber)';}
+function photoDzLeave(){document.getElementById('photo-dz').style.borderColor='var(--border)';}
+function photoDzDrop(e){e.preventDefault();photoDzLeave();const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'));if(files.length)processPhotos(files);}
+function mainHandlePhotos(e){const files=[...e.target.files];if(files.length)processPhotos(files);e.target.value='';}
+
+// 이미지 압축 (최대 1200px, WebP 변환)
+function compressImage(file){
+  return new Promise(res=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const MAX=1200;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{
+        const reader=new FileReader();
+        reader.onload=ev=>res(ev.target.result.split(',')[1]);
+        reader.readAsDataURL(blob);
+        URL.revokeObjectURL(url);
+      },'image/webp',0.82);
+    };
+    img.src=url;
+  });
+}
+
+async function processPhotos(files){
+  toast(`📸 ${files.length}장 처리 중...`,'info');
+  for(const file of files){
+    const b64=await compressImage(file);
+    // 일단 unknown으로 저장, AI 분류는 PDF 분석 시 같이 진행
+    _uploadedPhotos.push({b64,type:'unknown',name:file.name,originalName:file.name});
+  }
+  renderPhotoPreview();
+  // AI로 사진 분류
+  if(_uploadedPhotos.length>0)classifyPhotos();
+}
+
+async function classifyPhotos(){
+  if(!getApiKey()){toast('API 키를 입력해주세요','err');return;}
+  try{
+    const unclassified=_uploadedPhotos.filter(p=>p.type==='unknown');
+    if(!unclassified.length)return;
+    const content=[{type:'text',text:`아래 이미지들을 분석해서 각각 "part"(부품/완성품 사진) 또는 "wear"(인서트/공구 마모 사진) 로 분류하세요.\n이미지 수: ${unclassified.length}개\n순서대로 JSON 배열로만 출력하세요. 예: ["part","wear","part"]\n절대 다른 텍스트 없이 JSON 배열만 출력.`}];
+    unclassified.forEach(p=>{content.push({type:'image',source:{type:'base64',media_type:'image/webp',data:p.b64}});});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content}]})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.map(c=>c.text||'').join('').trim();
+    const types=JSON.parse(raw);
+    unclassified.forEach((p,i)=>{if(types[i])p.type=types[i];});
+    renderPhotoPreview();
+    toast('📸 사진 분류 완료','ok');
+  }catch(e){
+    console.error('사진 분류 실패:',e);
+    // 분류 실패해도 unknown으로 유지
+  }
+}
+
+function renderPhotoPreview(){
+  const el=document.getElementById('photo-preview-list');
+  if(!el)return;
+  if(!_uploadedPhotos.length){el.innerHTML='';return;}
+  el.innerHTML=_uploadedPhotos.map((p,i)=>{
+    const typeLabel=p.type==='part'?'부품사진':p.type==='wear'?'마모사진':'분류중...';
+    const typeColor=p.type==='part'?'var(--teal)':p.type==='wear'?'var(--amber)':'var(--text3)';
+    return `<div style="position:relative;width:72px">
+      <img src="data:image/webp;base64,${p.b64}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:2px solid ${typeColor}">
+      <div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:7px;background:rgba(0,0,0,.7);color:${typeColor};padding:1px 2px;border-radius:0 0 4px 4px">${typeLabel}</div>
+      <button onclick="removePhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removePhoto(i){_uploadedPhotos.splice(i,1);renderPhotoPreview();}
 function mainDzDrop(e){e.preventDefault();mainDzLeave();const f=e.dataTransfer.files[0];if(f&&f.name.toLowerCase().endsWith('.pdf'))startPDFAnalysis(f);else toast('PDF 파일만 가능합니다','err');}
 function mainHandlePDF(e){const f=e.target.files[0];if(f)startPDFAnalysis(f);e.target.value='';}
 
 // ── PDF 분석 시작 ──
 let _lastPDFFile=null;
+let _uploadedPhotos=[]; // [{b64, type:'part'|'wear'|'unknown', name}] — 업로드된 사진들
 async function startPDFAnalysis(file){
   _lastPDFFile=file;
   // 로딩 화면 표시
@@ -1455,46 +1568,56 @@ PDF에서 모든 데이터를 정확히 추출하여 JSON으로 반환하세요.
 반드시 순수 JSON만 출력하세요 (백틱, 마크다운 없이).
 
 중요 추출 규칙:
+- 날짜: PDF에 적힌 날짜를 그대로 YYYY-MM-DD로 변환하세요. 2026년은 유효한 날짜입니다.
 - Customer/고객사 필드가 비어있으면 DISCUSSION/NOTES 내용이나 문서 전체에서 유추하세요
 - Engineer/담당자 필드가 비어있어도 괜찮습니다
-- 절삭조건 표에 열이 여러 개(Plunging/Shouldering 등)인 경우: 기존 열들은 모두 "_e"에, ISCAR 열들은 모두 "_i"에 대표값으로 정리하세요
 - DC 앞의 ø 기호는 제거하고 숫자만 기입하세요 (예: ø20.0 → 20.0)
-- 열이 기존/ISCAR 구분이 명확하지 않으면 왼쪽=기존(_e), 오른쪽=ISCAR(_i)로 처리하세요
 - doc_type: CUTTING CONDITION 표가 있으면 "test", 협의 내용/회의록이면 "meet"
 - 숫자 수치는 이미지를 주의 깊게 보고 정확히 읽으세요 (예: /o.o → 10.0, /,600 → 1,600)
+- 슬래시(/)로 구분된 복수값은 그대로 유지하세요 (예: 0.15 / 0.1, 358 / 239)
+
+절삭조건 표 추출 규칙 (중요):
+- 표에 열이 여러 개인 경우(예: Application/Plunging/Shouldering) 각 열을 별도로 추출하세요
+- ct_cols 배열로 열 구조를 먼저 정의하고, ct_data에 각 행의 값을 기입하세요
+- 기존공구 열 = iscar:false, ISCAR 공구 열 = iscar:true
+- 같은 브랜드 아래 여러 공정이 있으면 group 필드에 브랜드명을 넣으세요
 
 JSON 구조:
 {
   "doc_type": "test 또는 meet",
   "date": "YYYY-MM-DD",
-  "customer": "고객사명 (비어있으면 NOTES에서 추출)",
-  "engineer": "담당자명 (비어있으면 빈 문자열)",
+  "customer": "고객사명",
+  "engineer": "담당자명",
   "industry": "산업분류",
   "part": "부품명",
-  "material": "소재코드(S45C, SCM440 등, 장비규격 아님)",
+  "material": "소재코드",
   "process": "공정명",
   "machine": "장비 브랜드+모델",
   "spindle": "스핀들/척 규격",
   "power": "kW",
   "max_rpm": "최대RPM",
-  "ct": {
-    "brand_e": "기존 브랜드", "brand_i": "ISCAR",
-    "holder_e": "", "holder_i": "",
-    "insert_e": "", "insert_i": "",
-    "grade_e": "", "grade_i": "",
-    "dc_e": "직경(숫자만)", "dc_i": "직경(숫자만)",
-    "vc_e": "", "vc_i": "",
-    "rpm_e": "", "rpm_i": "",
-    "fz_e": "", "fz_i": "",
-    "teeth_e": "", "teeth_i": "",
-    "f_e": "", "f_i": "",
-    "ae_e": "", "ae_i": "",
-    "ap_e": "", "ap_i": "",
-    "coolant_e": "", "coolant_i": "",
-    "ct_e": "", "ct_i": "",
-    "tl_e": "Tool Life (기존)", "tl_i": "Tool Life (ISCAR)",
-    "corner_e": "", "corner_i": "",
-    "remark_e": "", "remark_i": ""
+  "ct_cols": [
+    {"id":"e1","label":"열이름(예:Plunging)","iscar":false,"group":"그룹명(예:ACHTECK) 없으면 빈문자열"},
+    {"id":"i1","label":"열이름(예:Plunging)","iscar":true,"group":"그룹명(예:ISCAR) 없으면 빈문자열"}
+  ],
+  "ct_data": {
+    "brand":   {"e1":"ACHTECK","i1":"ISCAR"},
+    "holder":  {"e1":"","i1":"MDR D32-2-C32-AN16"},
+    "insert":  {"e1":"M200-4ES-200","i1":"MDR ANMU 160508PNTR"},
+    "grade":   {"e1":"","i1":"IC808"},
+    "dc":      {"e1":"20.0","i1":"32.0"},
+    "vc":      {"e1":"101","i1":"120"},
+    "rpm":     {"e1":"1,600","i1":"1,194"},
+    "fz":      {"e1":"0.06","i1":"0.15 / 0.1"},
+    "zeff":    {"e1":"4","i1":"2"},
+    "f":       {"e1":"380","i1":"358 / 239"},
+    "ae":      {"e1":"10.0","i1":"8.5"},
+    "ap":      {"e1":"10.7","i1":"10.7"},
+    "coolant": {"e1":"Y","i1":"Y"},
+    "ct":      {"e1":"20","i1":"13"},
+    "tl":      {"e1":"MQ4-50 / MX5-100","i1":"MQ4-0 / MX5-155"},
+    "corner":  {"e1":"1","i1":"4"},
+    "remark":  {"e1":"","i1":"소음으로 인한 일부 조건 완화"}
   },
   "discussion": "DISCUSSION/NOTES 전체 내용",
   "result": "RESULT 전체 내용",
@@ -1508,7 +1631,7 @@ JSON 구조:
     const res1=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,system:sys1,
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:sys1,
         messages:[{role:'user',content:[
           {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
           {type:'text',text:'이 일일업무일지 PDF에서 모든 데이터를 추출하세요. JSON만 출력.'}
@@ -1517,7 +1640,19 @@ JSON 구조:
     const d1=await res1.json();
     if(d1.error)throw new Error(d1.error.message);
     const raw1=d1.content.map(c=>c.text||'').join('');
-    const extracted=JSON.parse(raw1.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').replace(/^```\s*/,'').trim());
+    const extracted=JSON.parse(raw1.replace(/^```json\s*/,'').replace(/\s*```$/,'').replace(/^```\s*/,'').trim());
+
+    // ct_cols/ct_data → 내부 구조로 변환
+    if(extracted.ct_cols&&extracted.ct_data){
+      extracted._ctCols=extracted.ct_cols;
+      extracted._ctData=extracted.ct_data;
+    }
+    // 업로드된 사진 분류 결과 추가
+    extracted._photos={
+      part:_uploadedPhotos.filter(p=>p.type==='part').map(p=>p.b64),
+      wear:_uploadedPhotos.filter(p=>p.type==='wear').map(p=>p.b64),
+      unknown:_uploadedPhotos.filter(p=>p.type==='unknown').map(p=>p.b64)
+    };
 
     // step 상태 업데이트 (안전하게)
     const setStep=(id,color,text)=>{const el=document.getElementById(id);if(el){el.style.color=color;el.textContent=text;}};
@@ -1532,10 +1667,12 @@ JSON 구조:
 반드시 순수 JSON만 출력하세요.
 
 의심 기준:
+- 날짜: 2020~2030년 사이는 모두 정상입니다. 절대 날짜를 플래그하지 마세요.
 - 손글씨 OCR 오류 가능성 (0/O, 1/I/l, 6/G, 8/B 혼동)
 - /o.o 같은 패턴은 10.0일 가능성 높음
-- /,600 같은 패턴은 1,600일 가능성 높음  
+- /,600 같은 패턴은 1,600일 가능성 높음
 - 알파벳 혼입된 숫자 (예: "w 3", "Jo|", "Jol" 등)
+- 슬래시(/)로 구분된 복수값(예: 0.15 / 0.1)은 정상입니다. 플래그하지 마세요.
 - 물리적으로 불합리한 수치:
   * 밀링 Vc: 보통 50~400 m/min (500 초과면 의심)
   * 터닝 Vc: 보통 80~350 m/min
@@ -1544,12 +1681,11 @@ JSON 구조:
   * F(이송): 보통 50~3000 mm/min (5000 초과면 의심)
 - 공구코드 패턴 이상 (ISCAR 코드는 영숫자 조합)
 - 필수 필드 비어있음 (customer, material, vc, rpm 등)
-- Tool Life가 MX/MQ 구분 안 된 경우
 
 JSON 구조 (flags 배열에 의심 항목):
 {
   "flags": [
-    {"field": "필드명 (예: ct.f_e)", "value": "현재값", "reason": "의심 이유", "suggestion": "추정 정값 또는 빈문자열"}
+    {"field": "필드명", "value": "현재값", "reason": "의심 이유", "suggestion": "추정 정값 또는 빈문자열"}
   ],
   "doc_type_confidence": "high 또는 low",
   "overall_note": "전체 품질 평가 1문장"
@@ -1612,83 +1748,143 @@ function renderVerifyPanel(data, verified, filename){
     typeEl.textContent+=' ⚠️';typeEl.style.background='rgba(239,68,68,.15)';typeEl.style.color='var(--ng)';
   }
 
-  // 전체 노트
   let html='';
+
+  // 전체 품질 노트
   if(verified.overall_note){
     html+=`<div style="grid-column:1/-1;background:var(--surf2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace">
       💡 ${verified.overall_note} · 의심항목 <span style="color:${flags.length?'var(--ng)':'var(--ok)'};font-weight:700">${flags.length}개</span>
     </div>`;
   }
 
-  // 기본정보 섹션
+  // ── 기본정보 + 부품사진 ──
+  const photos=data._photos||{part:[],wear:[],unknown:[]};
   html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">기본 정보</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
 
-  const basicFields=[
-    {key:'date',label:'날짜',id:'v-date'},
-    {key:'customer',label:'고객사',id:'v-customer'},
-    {key:'engineer',label:'담당자(Engineer)',id:'v-engineer'},
-    {key:'industry',label:'산업',id:'v-industry'},
-    {key:'part',label:'부품명',id:'v-part'},
-    {key:'material',label:'소재',id:'v-material'},
-    {key:'process',label:'공정',id:'v-process'},
-    {key:'machine',label:'장비',id:'v-machine'},
-    {key:'spindle',label:'스핀들',id:'v-spindle'},
-    {key:'power',label:'출력(kW)',id:'v-power'},
-    {key:'max_rpm',label:'Max RPM',id:'v-max_rpm'},
-  ];
+  [{key:'date',label:'날짜',id:'v-date'},{key:'customer',label:'고객사',id:'v-customer'},
+   {key:'engineer',label:'담당자',id:'v-engineer'},{key:'industry',label:'산업',id:'v-industry'},
+   {key:'part',label:'부품명',id:'v-part'},{key:'material',label:'소재',id:'v-material'},
+   {key:'process',label:'공정',id:'v-process'},{key:'machine',label:'장비',id:'v-machine'},
+   {key:'spindle',label:'스핀들',id:'v-spindle'},{key:'power',label:'출력(kW)',id:'v-power'},
+   {key:'max_rpm',label:'Max RPM',id:'v-max_rpm'}
+  ].forEach(f=>html+=renderVerifyField(f.label,f.id,data[f.key]||'',flagMap[f.key]));
+  html+=`</div>`;
 
-  basicFields.forEach(f=>{
-    const flagged=flagMap[f.key];
-    html+=renderVerifyField(f.label, f.id, data[f.key]||'', flagged);
-  });
-  html+=`</div></div>`;
-
-  // 협의 전용 필드
-  if(data.doc_type==='meet'){
-    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--teal);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">협의 정보</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
-    [{key:'attendees',label:'참석자',id:'v-attendees'},{key:'agenda',label:'협의 안건',id:'v-agenda'},{key:'meet_result',label:'협의 결과',id:'v-meet_result'},{key:'next_action',label:'다음 액션',id:'v-next_action'}].forEach(f=>{
-      html+=renderVerifyField(f.label,f.id,data[f.key]||'',flagMap[f.key]);
+  // 부품 사진
+  const partPhotos=[...photos.part,...photos.unknown];
+  if(partPhotos.length){
+    html+=`<div style="margin-top:8px"><div style="font-size:8px;color:var(--teal);font-family:'JetBrains Mono',monospace;margin-bottom:4px">📸 부품사진 (${partPhotos.length}장) — 기본정보에 저장됨</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">`;
+    partPhotos.forEach((b64,i)=>{
+      html+=`<div style="position:relative">
+        <img src="data:image/webp;base64,${b64}" style="width:80px;height:80px;object-fit:cover;border-radius:5px;border:2px solid var(--teal)">
+        <button onclick="changePhotoType(${i},'part','part')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:var(--teal);border-radius:3px;font-size:8px;padding:1px 4px;cursor:pointer">부품✓</button>
+      </div>`;
     });
     html+=`</div></div>`;
   }
+  html+=`</div>`;
 
-  // 절삭조건 (test만)
-  if(data.doc_type==='test'&&data.ct){
-    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">절삭 조건 비교</div>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9.5px">
-    <thead><tr>
-      <th style="background:var(--surf3);padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text2);border-bottom:1px solid var(--border2)">항목</th>
-      <th style="background:var(--surf3);padding:5px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text2);border-bottom:1px solid var(--border2)">기존</th>
-      <th style="background:var(--surf3);padding:5px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--amber);border-bottom:1px solid var(--border2)">ISCAR</th>
-    </tr></thead><tbody>`;
-
-    const ctRows=[
-      {k:'brand',l:'Brand'},{k:'holder',l:'Holder'},{k:'insert',l:'Insert'},{k:'grade',l:'Grade'},
-      {k:'dc',l:'DC (mm)'},{k:'vc',l:'Vc (m/min)'},{k:'rpm',l:'N (RPM)'},{k:'fz',l:'fz (mm/t)'},
-      {k:'teeth',l:'날수'},{k:'f',l:'F (mm/min)'},{k:'ae',l:'Ae (mm)'},{k:'ap',l:'Ap (mm)'},
-      {k:'coolant',l:'Coolant'},{k:'ct',l:'C/T (sec)'},{k:'tl',l:'Tool Life'},{k:'corner',l:'Corner/EA'},{k:'remark',l:'Remark'}
-    ];
-    ctRows.forEach(r=>{
-      const ve=data.ct[`${r.k}_e`]||'';
-      const vi=data.ct[`${r.k}_i`]||'';
-      if(!ve&&!vi)return;
-      const feFlag=flagMap[`ct.${r.k}_e`]||flagMap[`${r.k}_e`];
-      const fiFlag=flagMap[`ct.${r.k}_i`]||flagMap[`${r.k}_i`];
-      html+=`<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text2);background:var(--surf2);white-space:nowrap">${r.l}</td>
-        <td style="padding:3px 4px;text-align:center">${renderCTInput(`vct-${r.k}-e`,ve,feFlag)}</td>
-        <td style="padding:3px 4px;text-align:center">${renderCTInput(`vct-${r.k}-i`,vi,fiFlag)}</td>
-      </tr>`;
-    });
-    html+=`</tbody></table></div></div>`;
+  // ── 협의 전용 필드 ──
+  if(data.doc_type==='meet'){
+    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--teal);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">협의 정보</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+    [{key:'attendees',label:'참석자',id:'v-attendees'},{key:'agenda',label:'협의 안건',id:'v-agenda'},
+     {key:'meet_result',label:'협의 결과',id:'v-meet_result'},{key:'next_action',label:'다음 액션',id:'v-next_action'}
+    ].forEach(f=>html+=renderVerifyField(f.label,f.id,data[f.key]||'',flagMap[f.key]));
+    html+=`</div></div>`;
   }
 
-  // 요약
-  html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">요약 / 특이사항</div>
-    <textarea id="v-summary" style="width:100%;min-height:80px;background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:7px;font-size:10.5px;color:var(--text);font-family:'Noto Sans KR',sans-serif;resize:vertical">${data.summary||data.discussion||''}</textarea>
-  </div>`;
+  // ── 절삭조건 (test만) — 새 다중 열 구조 ──
+  if(data.doc_type==='test'){
+    const cols=data._ctCols||[];
+    const ctData=data._ctData||{};
+    // 구 구조(ct 객체) fallback
+    const legacyCt=data.ct||{};
+
+    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">절삭 조건</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9px;min-width:400px">`;
+
+    if(cols.length>0){
+      // 그룹 헤더 렌더링
+      const hasGroups=cols.some(c=>c.group);
+      if(hasGroups){
+        const groups=[];
+        cols.forEach(c=>{
+          const g=c.group||c.label;
+          const last=groups[groups.length-1];
+          if(last&&last.name===g&&last.iscar===c.iscar)last.count++;
+          else groups.push({name:g,count:1,iscar:c.iscar});
+        });
+        html+=`<thead><tr><th style="background:var(--surf3);padding:4px 8px;text-align:left;font-size:7px;color:var(--text2);border:1px solid var(--border2)" rowspan="2">항목</th>`;
+        groups.forEach(g=>{
+          const style=g.iscar?'color:var(--amber);background:rgba(240,160,32,.08)':'color:var(--text2)';
+          html+=`<th colspan="${g.count}" style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;border:1px solid var(--border2);${style}">${g.name}</th>`;
+        });
+        html+=`</tr><tr>`;
+        cols.forEach(c=>{
+          const s=c.iscar?'color:var(--amber)':'color:var(--text3)';
+          html+=`<th style="background:var(--surf3);padding:3px 6px;text-align:center;font-size:7px;border:1px solid var(--border2);${s}">${c.label}</th>`;
+        });
+        html+=`</tr></thead>`;
+      } else {
+        html+=`<thead><tr><th style="background:var(--surf3);padding:4px 8px;text-align:left;font-size:7px;color:var(--text2);border:1px solid var(--border2)">항목</th>`;
+        cols.forEach(c=>{
+          const s=c.iscar?'color:var(--amber)':'color:var(--text2)';
+          html+=`<th style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;border:1px solid var(--border2);${s}">${c.label}</th>`;
+        });
+        html+=`</tr></thead>`;
+      }
+      html+=`<tbody>`;
+      CT_ROWS.forEach(r=>{
+        const hasVal=cols.some(c=>ctData[r.k]&&ctData[r.k][c.id]);
+        if(!hasVal)return;
+        html+=`<tr><td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text2);background:var(--surf2);border:1px solid var(--border);white-space:nowrap">${r.l}</td>`;
+        cols.forEach(c=>{
+          const val=(ctData[r.k]&&ctData[r.k][c.id])||'';
+          const fieldKey=`ct.${r.k}.${c.id}`;
+          const flagged=flagMap[fieldKey]||flagMap[`${r.k}_${c.iscar?'i':'e'}`];
+          html+=`<td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-${c.id}`,val,flagged)}</td>`;
+        });
+        html+=`</tr>`;
+      });
+      html+=`</tbody>`;
+    } else {
+      // Legacy ct 구조 fallback
+      html+=`<thead><tr>
+        <th style="background:var(--surf3);padding:4px 8px;text-align:left;font-size:7px;color:var(--text2);border:1px solid var(--border2)">항목</th>
+        <th style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;color:var(--text2);border:1px solid var(--border2)">기존</th>
+        <th style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;color:var(--amber);border:1px solid var(--border2)">ISCAR</th>
+      </tr></thead><tbody>`;
+      CT_ROWS.forEach(r=>{
+        const ve=legacyCt[`${r.k}_e`]||'';const vi=legacyCt[`${r.k}_i`]||'';
+        if(!ve&&!vi)return;
+        html+=`<tr><td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text2);background:var(--surf2);border:1px solid var(--border)">${r.l}</td>
+          <td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-e`,ve,flagMap[`ct.${r.k}_e`]||flagMap[`${r.k}_e`])}</td>
+          <td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-i`,vi,flagMap[`ct.${r.k}_i`]||flagMap[`${r.k}_i`])}</td>
+        </tr>`;
+      });
+      html+=`</tbody>`;
+    }
+    html+=`</table></div></div>`;
+  }
+
+  // ── 요약/특이사항 + 마모사진 ──
+  html+=`<div style="grid-column:1/-1">
+    <div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">요약 / 특이사항</div>
+    <textarea id="v-summary" style="width:100%;min-height:70px;background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:7px;font-size:10.5px;color:var(--text);font-family:'Noto Sans KR',sans-serif;resize:vertical">${data.summary||data.discussion||''}</textarea>`;
+
+  // 마모 사진
+  if(photos.wear&&photos.wear.length){
+    html+=`<div style="margin-top:6px"><div style="font-size:8px;color:var(--amber);font-family:'JetBrains Mono',monospace;margin-bottom:4px">📸 마모사진 (${photos.wear.length}장) — 요약/특이사항에 저장됨</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">`;
+    photos.wear.forEach(b64=>{
+      html+=`<img src="data:image/webp;base64,${b64}" style="width:80px;height:80px;object-fit:cover;border-radius:5px;border:2px solid var(--amber)">`;
+    });
+    html+=`</div></div>`;
+  }
+  html+=`</div>`;
 
   document.getElementById('verify-body').innerHTML=html;
 }
@@ -1725,10 +1921,8 @@ function confirmAndSave(){
   activeCat=cat;cid=null;img64=null;pptxSlides=[];
   curResult='ok';curPropStat='applied';curPropType='tooling';
 
-  // 검증 패널에서 수정된 값 읽기
   const gv=id=>{const el=document.getElementById(id);return el?el.value.trim():'';}
 
-  // 폼 채우기
   const title=`${gv('v-customer')||d.customer||''} – ${gv('v-part')||d.part||''} ${gv('v-process')||d.process||''}`.trim();
   document.getElementById('f-title').value=title||'새 문서';
   document.getElementById('f-date').value=gv('v-date')||d.date||tod();
@@ -1743,20 +1937,49 @@ function confirmAndSave(){
     document.getElementById('m-mat').value=gv('v-material')||d.material||'';
     document.getElementById('m-ind').value=gv('v-industry')||d.industry||'';
     document.getElementById('m-proc').value=gv('v-process')||d.process||'';
-    // CT 테이블 채우기
-    if(d.ct){
-      const ctRows=['brand','holder','insert','grade','dc','vc','rpm','fz','teeth','f','ae','ap','coolant','ct','tl','corner','remark'];
+
+    // ── 새 다중 열 CT 구조 처리 ──
+    const cols=d._ctCols||[];
+    const ctDataSrc=d._ctData||{};
+    if(cols.length>0){
+      // ctCols 업데이트 후 테이블 재빌드
+      ctCols=cols.map(c=>({id:c.id,label:c.label,iscar:c.iscar,group:c.group||''}));
+      buildCT();
+      // 검증 패널에서 수정된 값으로 채우기
+      CT_ROWS.forEach(r=>{
+        cols.forEach(c=>{
+          const el=document.getElementById(`ct-${r.k}-${c.id}`);
+          const verifyEl=document.getElementById(`vct-${r.k}-${c.id}`);
+          if(el){
+            el.value=(verifyEl?verifyEl.value:'')||(ctDataSrc[r.k]&&ctDataSrc[r.k][c.id])||'';
+          }
+        });
+      });
+    } else if(d.ct){
+      // legacy ct 구조 fallback
       const ctKeyMap={brand:'brand',holder:'holder',insert:'insert',grade:'grade',dc:'dc',vc:'vc',rpm:'rpm',fz:'fz',teeth:'zeff',f:'f',ae:'ae',ap:'ap',coolant:'coolant',ct:'ct',tl:'tl',corner:'corner',remark:'remark'};
-      ctRows.forEach(k=>{
-        const ctKey=ctKeyMap[k]||k;
+      Object.keys(ctKeyMap).forEach(k=>{
+        const ctKey=ctKeyMap[k];
         const eEl=document.getElementById(`ct-${ctKey}-e`);
         const iEl=document.getElementById(`ct-${ctKey}-i`);
         const ve=document.getElementById(`vct-${k}-e`);
         const vi=document.getElementById(`vct-${k}-i`);
-        if(eEl&&ve)eEl.value=ve.value||d.ct[`${k}_e`]||d.ct[`${k}_eR`]||'';
-        if(iEl&&vi)iEl.value=vi.value||d.ct[`${k}_i`]||d.ct[`${k}_iR`]||'';
+        if(eEl&&ve)eEl.value=ve.value||d.ct[`${k}_e`]||'';
+        if(iEl&&vi)iEl.value=vi.value||d.ct[`${k}_i`]||'';
       });
     }
+
+    // 사진 저장 — img64에 부품사진 첫 장, 나머지는 _allPhotos에 저장
+    const photos=d._photos||{part:[],wear:[],unknown:[]};
+    const partPhotos=[...photos.part,...photos.unknown];
+    if(partPhotos.length>0){
+      img64='data:image/webp;base64,'+partPhotos[0];
+      const prevEl=document.getElementById('prev');
+      if(prevEl){prevEl.src=img64;prevEl.style.display='block';}
+    }
+    // 전체 사진 데이터 저장용 (saveDoc 시 사용)
+    window._pendingPhotos=photos;
+
   } else if(cat==='meet'){
     document.getElementById('cl-att').value=gv('v-attendees')||d.attendees||'';
     document.getElementById('cl-ag').value=gv('v-agenda')||d.agenda||'';
@@ -1799,13 +2022,42 @@ function buildCT(){
 function renderCtHead(){
   const head=document.getElementById('ct-head');
   if(!head)return;
-  let r1=`<tr><th style="width:80px">항목</th>`;
-  ctCols.forEach(c=>{
-    const style=c.iscar?'color:var(--amber);text-align:center':'text-align:center;color:var(--text2)';
-    r1+=`<th style="${style}">${c.label}</th>`;
-  });
-  r1+=`</tr>`;
-  head.innerHTML=r1;
+  // 그룹 헤더가 있는지 확인
+  const hasGroups=ctCols.some(c=>c.group);
+  if(hasGroups){
+    // 1행: 그룹 헤더 (colspan으로 묶기)
+    let r1=`<tr><th style="width:80px" rowspan="2">항목</th>`;
+    // 그룹별로 묶기
+    const groups=[];
+    ctCols.forEach(c=>{
+      const g=c.group||c.label;
+      const last=groups[groups.length-1];
+      if(last&&last.name===g&&last.iscar===c.iscar){last.count++;}
+      else{groups.push({name:g,count:1,iscar:c.iscar});}
+    });
+    groups.forEach(g=>{
+      const style=g.iscar?'color:var(--amber);text-align:center;background:rgba(240,160,32,.08)':'text-align:center;color:var(--text2)';
+      r1+=`<th colspan="${g.count}" style="${style};border-bottom:1px solid var(--border2)">${g.name}</th>`;
+    });
+    r1+=`</tr>`;
+    // 2행: 서브 레이블
+    let r2=`<tr>`;
+    ctCols.forEach(c=>{
+      const style=c.iscar?'color:var(--amber);text-align:center':'text-align:center;color:var(--text2)';
+      r2+=`<th style="${style};font-size:7px">${c.label}</th>`;
+    });
+    r2+=`</tr>`;
+    head.innerHTML=r1+r2;
+  } else {
+    // 기본: 단일 헤더 행
+    let r1=`<tr><th style="width:80px">항목</th>`;
+    ctCols.forEach(c=>{
+      const style=c.iscar?'color:var(--amber);text-align:center':'text-align:center;color:var(--text2)';
+      r1+=`<th style="${style}">${c.label}</th>`;
+    });
+    r1+=`</tr>`;
+    head.innerHTML=r1;
+  }
 }
 
 function renderCtBody(){
@@ -1822,11 +2074,34 @@ function renderCtBody(){
 }
 
 function addCtCol(){
-  const name=prompt('공정명 입력 (예: OP20 외경, Finish):','');
+  // 기존 그룹 목록 파악
+  const existingGroups=[...new Set(ctCols.filter(c=>c.group).map(c=>c.group))];
+  const name=prompt('열 이름 입력\n예: "Plunging" (기존 그룹의 서브열) 또는 "새공정" (독립 열)','');
   if(!name)return;
-  const id='c'+(ctCols.length);
-  const iscar=name.toLowerCase().includes('iscar')||ctCols.filter(c=>c.iscar).length<ctCols.filter(c=>!c.iscar).length;
-  ctCols.push({id,label:name,iscar});
+  const iscar=confirm(`"${name}" 열은 ISCAR 공구 열인가요?\n확인=ISCAR / 취소=기존공구`);
+  let group='';
+  if(existingGroups.length>0){
+    const useGroup=confirm(`기존 그룹에 추가할까요?\n그룹목록: ${existingGroups.join(', ')}\n\n확인=그룹에 추가 / 취소=독립 열로 추가`);
+    if(useGroup){
+      group=existingGroups.length===1?existingGroups[0]:prompt(`어느 그룹에 추가?\n${existingGroups.join(', ')}`,existingGroups[iscar?existingGroups.length-1:0])||existingGroups[0];
+    }
+  }
+  const id='c'+(Date.now()%10000);
+  ctCols.push({id,label:name,iscar,group});
+  buildCT();
+}
+
+function addCtColGroup(){
+  // 그룹 전체 추가 (기존 단순 열 → 그룹+서브열 구조로 전환)
+  const groupName=prompt('그룹 이름 입력 (예: 기존, ISCAR)','기존');
+  if(!groupName)return;
+  const subCols=prompt('서브 열 이름들 (쉼표로 구분)\n예: Plunging,Shouldering','Plunging,Shouldering');
+  if(!subCols)return;
+  const iscar=confirm(`"${groupName}" 그룹은 ISCAR 공구 그룹인가요?`);
+  subCols.split(',').map(s=>s.trim()).filter(Boolean).forEach(sub=>{
+    const id='c'+(Date.now()%10000)+Math.random().toString(36).slice(2,5);
+    ctCols.push({id,label:sub,iscar,group:groupName});
+  });
   buildCT();
 }
 
@@ -2089,11 +2364,33 @@ function saveDoc(){
   const title=document.getElementById('f-title').value.trim();if(!title){toast('제목을 입력하세요','err');return;}
   const cat=activeCat;
   const doc={id:cid||uid(),cat,title,date:document.getElementById('f-date').value,customer:document.getElementById('f-cust').value,author:document.getElementById('f-author').value,summary:document.getElementById('f-summary').value,image:img64,pptxSlides:cat==='prop'?pptxSlides:[],updatedAt:new Date().toISOString()};
-  if(cat==='test'){doc.result=curResult;doc.extracted=document.getElementById('f-extracted').value;doc.machine=document.getElementById('m-machine').value;doc.spindle=document.getElementById('m-spindle').value;doc.part=document.getElementById('m-part').value;doc.material=document.getElementById('m-mat').value;doc.industry=document.getElementById('m-ind').value;doc.process=document.getElementById('m-proc').value;doc.ctData=getCT();doc.ctOld=document.getElementById('c-old').value;doc.ctNew=document.getElementById('c-new').value;doc.cpp=document.getElementById('c-cpp').value;doc.saving=document.getElementById('c-save').value;}
+  if(cat==='test'){
+    doc.result=curResult;
+    doc.extracted=document.getElementById('f-extracted').value;
+    doc.machine=document.getElementById('m-machine').value;
+    doc.spindle=document.getElementById('m-spindle').value;
+    doc.part=document.getElementById('m-part').value;
+    doc.material=document.getElementById('m-mat').value;
+    doc.industry=document.getElementById('m-ind').value;
+    doc.process=document.getElementById('m-proc').value;
+    doc.ctData=getCT();
+    doc.ctOld=document.getElementById('c-old').value;
+    doc.ctNew=document.getElementById('c-new').value;
+    doc.cpp=document.getElementById('c-cpp').value;
+    doc.saving=document.getElementById('c-save').value;
+    // 사진 저장
+    if(window._pendingPhotos){
+      doc.photos=window._pendingPhotos; // {part:[b64,...], wear:[b64,...]}
+      window._pendingPhotos=null;
+    }
+  }
   else if(cat==='meet'){doc.result=curResult;doc.extracted=document.getElementById('f-extracted').value;doc.attendees=document.getElementById('cl-att').value;doc.agenda=document.getElementById('cl-ag').value;doc.meetResult=document.getElementById('cl-res').value;doc.nextAction=document.getElementById('cl-act').value;}
   else if(cat==='prop'){doc.propType=curPropType;doc.propStatus=curPropStat;doc.propTool=document.getElementById('pr-tool').value;doc.propEffect=document.getElementById('pr-effect').value;doc.extracted=document.getElementById('f-prop-ext').value;}
   const i=docs.findIndex(d=>d.id===doc.id);if(i>=0)docs[i]=doc;else docs.push(doc);
-  sv();cid=doc.id;renderSB();renderView(doc.id);populateP3();populateWDocs();goP('p2');toast('저장 완료 ✓','ok');
+  sv();cid=doc.id;renderSB();renderView(doc.id);populateP3();populateWDocs();
+  // 업로드 초기화
+  _uploadedPhotos=[];renderPhotoPreview();
+  goP('p2');toast('저장 완료 ✓','ok');
 }
 function renderView(id){
   const d=docs.find(x=>x.id===id);if(!d)return;
