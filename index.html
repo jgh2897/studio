@@ -1559,7 +1559,7 @@ async function startPDFAnalysis(file){
     </div>`;
 
   try{
-    const b64=await fileToB64(file);
+    // PDF → JPEG 변환으로 토큰 절감 (PDF 직접 전송 시 214K 토큰 초과 문제 해결)
 
     // ── 1단계: 추출 ──
     const sys1=`당신은 ISCAR Korea 일일업무일지(현장기록지) 전문 분석 AI입니다.
@@ -1633,8 +1633,8 @@ JSON 구조:
       headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:sys1,
         messages:[{role:'user',content:[
-          {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
-          {type:'text',text:'이 일일업무일지 PDF에서 모든 데이터를 추출하세요. JSON만 출력.'}
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:await pdfToJpeg(file)}},
+          {type:'text',text:'이 일일업무일지 이미지에서 모든 데이터를 추출하세요. JSON만 출력.'}
         ]}]})
     });
     const d1=await res1.json();
@@ -1728,6 +1728,27 @@ function fileToB64(file){
     r.onerror=()=>rej(new Error('파일 읽기 실패'));
     r.readAsDataURL(file);
   });
+}
+
+// PDF → JPEG 변환 (토큰 절감용, PDF.js 사용)
+async function pdfToJpeg(file, scale=1.2){
+  // PDF.js CDN 로드
+  if(!window.pdfjsLib){
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    await new Promise(r=>setTimeout(r,300));
+  }
+  const arrayBuffer=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  const page=await pdf.getPage(1);
+  const viewport=page.getViewport({scale});
+  const canvas=document.createElement('canvas');
+  canvas.width=viewport.width;
+  canvas.height=viewport.height;
+  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+  // JPEG 0.88 품질로 변환
+  const dataUrl=canvas.toDataURL('image/jpeg',0.88);
+  return dataUrl.split(',')[1];
 }
 
 // ── 검증 결과 렌더링 ──
