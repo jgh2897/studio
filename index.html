@@ -1153,7 +1153,15 @@ JSON structure:
   ],
   "resultSummary":"full test result text as found in document, preserve Korean"
 }`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:await pdfToJpeg(file)}},{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
+    let dbImgContent;
+    try{
+      const jpegB64=await pdfToJpeg(file);
+      dbImgContent={type:'image',source:{type:'base64',media_type:'image/jpeg',data:jpegB64}};
+    }catch(e){
+      console.warn('PDF→JPEG 변환 실패, PDF 직접 전송:', e.message);
+      dbImgContent={type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}};
+    }
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:[dbImgContent,{type:'text',text:'Extract all data from this ISCAR test report. Return ONLY JSON.'}]}]})});
     const data=await res.json();
     const raw=data.content.map(c=>c.text||'').join('');
     const clean=raw.replace(/```json|```/g,'').trim();
@@ -1628,13 +1636,24 @@ JSON 구조:
   "next_action": "다음 액션 (meet인 경우)"
 }`;
 
+    // PDF → JPEG 변환 시도, 실패 시 PDF 직접 전송으로 fallback
+    let imgContent;
+    try{
+      const jpegB64=await pdfToJpeg(file);
+      imgContent={type:'image',source:{type:'base64',media_type:'image/jpeg',data:jpegB64}};
+    }catch(jpegErr){
+      console.warn('PDF→JPEG 변환 실패, PDF 직접 전송으로 대체:', jpegErr.message);
+      const rawB64=await fileToB64(file);
+      imgContent={type:'document',source:{type:'base64',media_type:'application/pdf',data:rawB64}};
+    }
+
     const res1=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:sys1,
         messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:await pdfToJpeg(file)}},
-          {type:'text',text:'이 일일업무일지 이미지에서 모든 데이터를 추출하세요. JSON만 출력.'}
+          imgContent,
+          {type:'text',text:'이 일일업무일지에서 모든 데이터를 추출하세요. JSON만 출력.'}
         ]}]})
     });
     const d1=await res1.json();
@@ -1732,12 +1751,15 @@ function fileToB64(file){
 
 // PDF → JPEG 변환 (토큰 절감용, PDF.js 사용)
 async function pdfToJpeg(file, scale=1.2){
-  // PDF.js CDN 로드
+  // PDF.js 레거시 빌드 사용 (loadScript 호환)
   if(!window.pdfjsLib){
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    await new Promise(r=>setTimeout(r,300));
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.min.js');
+    await new Promise(r=>setTimeout(r,600));
+    if(window.pdfjsLib){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
+    }
   }
+  if(!window.pdfjsLib) throw new Error('PDF.js 로드 실패');
   const arrayBuffer=await file.arrayBuffer();
   const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
   const page=await pdf.getPage(1);
@@ -1746,7 +1768,6 @@ async function pdfToJpeg(file, scale=1.2){
   canvas.width=viewport.width;
   canvas.height=viewport.height;
   await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-  // JPEG 0.88 품질로 변환
   const dataUrl=canvas.toDataURL('image/jpeg',0.88);
   return dataUrl.split(',')[1];
 }
