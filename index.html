@@ -480,7 +480,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div></div>
+  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.5</div></div>
   <div class="tabs">
     <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력 <span style="font-size:8px;background:rgba(240,160,32,.2);color:var(--amber);padding:1px 5px;border-radius:3px;margin-left:3px">기록이</span></div>
     <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
@@ -1585,17 +1585,28 @@ PDF에서 모든 데이터를 정확히 추출하여 JSON으로 반환하세요.
 중요 추출 규칙:
 - 날짜: PDF에 적힌 날짜를 그대로 YYYY-MM-DD로 변환하세요. 2026년은 유효한 날짜입니다.
 - Customer/고객사 필드가 비어있으면 DISCUSSION/NOTES 내용이나 문서 전체에서 유추하세요
-- Engineer/담당자 필드가 비어있어도 괜찮습니다
 - DC 앞의 ø 기호는 제거하고 숫자만 기입하세요 (예: ø20.0 → 20.0)
 - doc_type: CUTTING CONDITION 표가 있으면 "test", 협의 내용/회의록이면 "meet"
 - 숫자 수치는 이미지를 주의 깊게 보고 정확히 읽으세요 (예: /o.o → 10.0, /,600 → 1,600)
 - 슬래시(/)로 구분된 복수값은 그대로 유지하세요 (예: 0.15 / 0.1, 358 / 239)
+- 줄이 그어진(취소선) 텍스트는 수정된 것으로 처리하세요
 
-절삭조건 표 추출 규칙 (중요):
-- 표에 열이 여러 개인 경우(예: Application/Plunging/Shouldering) 각 열을 별도로 추출하세요
-- ct_cols 배열로 열 구조를 먼저 정의하고, ct_data에 각 행의 값을 기입하세요
-- 기존공구 열 = iscar:false, ISCAR 공구 열 = iscar:true
-- 같은 브랜드 아래 여러 공정이 있으면 group 필드에 브랜드명을 넣으세요
+절삭조건 표 구조 (2026 양식 기준):
+표는 3영역으로 구성됩니다. ct_data 각 행에 row_type을 반드시 명시하세요.
+
+[상단 단일열] Brand, Holder, Insert, Grade, DC → row_type: "single"
+  - 기존공구(e), ISCAR(i) 각각 단일값
+  - ct_cols의 열 구분 없이 대표값 하나씩
+
+[Application 행] DC 바로 아래 행 → row_type: "app_row"
+  - 기존공구 열들의 공정명(예: Plunging, Shouldering)과 ISCAR 열들의 공정명을 기입
+  - 이 행이 Vc~Ap 구간의 열 레이블 역할을 함
+
+[중간 다중열] Vc, N(RPM), fz, No.of Teeth, F, Ae, Ap → row_type: "multi"
+  - ct_cols에 정의된 각 열별로 값을 기입
+
+[하단 단일열] Coolant, Cycle Time, Tool Life, Corner, Remark → row_type: "single"
+  - 기존공구(e), ISCAR(i) 각각 단일값
 
 JSON 구조:
 {
@@ -1612,27 +1623,29 @@ JSON 구조:
   "power": "kW",
   "max_rpm": "최대RPM",
   "ct_cols": [
-    {"id":"e1","label":"열이름(예:Plunging)","iscar":false,"group":"그룹명(예:ACHTECK) 없으면 빈문자열"},
-    {"id":"i1","label":"열이름(예:Plunging)","iscar":true,"group":"그룹명(예:ISCAR) 없으면 빈문자열"}
+    {"id":"e1","label":"Plunging","iscar":false,"group":"ACHTECK"},
+    {"id":"e2","label":"Shouldering","iscar":false,"group":"ACHTECK"},
+    {"id":"i1","label":"Plunging","iscar":true,"group":"ISCAR"}
   ],
   "ct_data": {
-    "brand":   {"e1":"ACHTECK","i1":"ISCAR"},
-    "holder":  {"e1":"","i1":"MDR D32-2-C32-AN16"},
-    "insert":  {"e1":"M200-4ES-200","i1":"MDR ANMU 160508PNTR"},
-    "grade":   {"e1":"","i1":"IC808"},
-    "dc":      {"e1":"20.0","i1":"32.0"},
-    "vc":      {"e1":"101","i1":"120"},
-    "rpm":     {"e1":"1,600","i1":"1,194"},
-    "fz":      {"e1":"0.06","i1":"0.15 / 0.1"},
-    "zeff":    {"e1":"4","i1":"2"},
-    "f":       {"e1":"380","i1":"358 / 239"},
-    "ae":      {"e1":"10.0","i1":"8.5"},
-    "ap":      {"e1":"10.7","i1":"10.7"},
-    "coolant": {"e1":"Y","i1":"Y"},
-    "ct":      {"e1":"20","i1":"13"},
-    "tl":      {"e1":"MQ4-50 / MX5-100","i1":"MQ4-0 / MX5-155"},
-    "corner":  {"e1":"1","i1":"4"},
-    "remark":  {"e1":"","i1":"소음으로 인한 일부 조건 완화"}
+    "brand":   {"row_type":"single","e":"ACHTECK","i":"ISCAR"},
+    "holder":  {"row_type":"single","e":"","i":"MDR D32-2-C32-AN16"},
+    "insert":  {"row_type":"single","e":"M200-4ES-200","i":"MDR ANMU 160508PNTR"},
+    "grade":   {"row_type":"single","e":"","i":"IC808"},
+    "dc":      {"row_type":"single","e":"20.0","i":"32.0"},
+    "application":{"row_type":"app_row","e1":"Plunging","e2":"Shouldering","i1":"Plunging"},
+    "vc":      {"row_type":"multi","e1":"101","e2":"101","i1":"120"},
+    "rpm":     {"row_type":"multi","e1":"1,600","e2":"1,600","i1":"1,194"},
+    "fz":      {"row_type":"multi","e1":"0.06","e2":"0.06","i1":"0.15 / 0.1"},
+    "zeff":    {"row_type":"multi","e1":"4","e2":"4","i1":"2"},
+    "f":       {"row_type":"multi","e1":"380","e2":"380","i1":"358 / 239"},
+    "ae":      {"row_type":"multi","e1":"10.0","e2":"10.0","i1":"8.5"},
+    "ap":      {"row_type":"multi","e1":"10.7","e2":"10.7","i1":"10.7"},
+    "coolant": {"row_type":"single","e":"Y","i":"Y"},
+    "ct":      {"row_type":"single","e":"20","i":"13"},
+    "tl":      {"row_type":"single","e":"MQ4-50 / MX5-100","i":"MQ4-0 / MX5-155"},
+    "corner":  {"row_type":"single","e":"1","i":"4"},
+    "remark":  {"row_type":"single","e":"","i":"소음으로 인한 일부 조건 완화"}
   },
   "discussion": "DISCUSSION/NOTES 전체 내용",
   "result": "RESULT 전체 내용",
@@ -1844,62 +1857,98 @@ function renderVerifyPanel(data, verified, filename){
     html+=`</div></div>`;
   }
 
-  // ── 절삭조건 (test만) — 새 다중 열 구조 ──
+  // ── 절삭조건 (test만) — single/app_row/multi 구조 ──
   if(data.doc_type==='test'){
     const cols=data._ctCols||[];
     const ctData=data._ctData||{};
-    // 구 구조(ct 객체) fallback
     const legacyCt=data.ct||{};
+    const eCols=cols.filter(c=>!c.iscar);
+    const iCols=cols.filter(c=>c.iscar);
+    const totalCols=cols.length; // e열들 + i열들
 
-    html+=`<div style="grid-column:1/-1"><div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">절삭 조건</div>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9px;min-width:400px">`;
+    // CT 행 순서 정의
+    const CT_ROW_DEFS=[
+      {k:'brand',l:'Brand'},{k:'holder',l:'Holder'},{k:'insert',l:'Insert'},{k:'grade',l:'Grade'},{k:'dc',l:'DC'},
+      {k:'application',l:'Application'},
+      {k:'vc',l:'Vc (m/min)'},{k:'rpm',l:'N (RPM)'},{k:'fz',l:'fz (mm/tooth)'},{k:'zeff',l:'No. of Teeth'},
+      {k:'f',l:'F (mm/min)'},{k:'ae',l:'Ae (mm)'},{k:'ap',l:'Ap (mm)'},
+      {k:'coolant',l:'Coolant'},{k:'ct',l:'Cycle Time (sec)'},{k:'tl',l:'Tool Life'},{k:'corner',l:'Corner / EA'},{k:'remark',l:'Remark'}
+    ];
+
+    html+=`<div style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">
+        <div style="font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--amber);text-transform:uppercase">절삭 조건</div>
+        <div style="display:flex;gap:4px">
+          <button onclick="ctAddRow()" style="font-size:8px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">+ 행</button>
+          <button onclick="ctAddCol(false)" style="font-size:8px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">+ 기존열</button>
+          <button onclick="ctAddCol(true)" style="font-size:8px;padding:2px 7px;background:rgba(240,160,32,.1);border:1px solid rgba(240,160,32,.3);border-radius:3px;color:var(--amber);cursor:pointer">+ ISCAR열</button>
+        </div>
+      </div>
+    <div style="overflow-x:auto"><table id="vct-table" style="width:100%;border-collapse:collapse;font-size:9px;min-width:400px">`;
 
     if(cols.length>0){
-      // 그룹 헤더 렌더링
-      const hasGroups=cols.some(c=>c.group);
-      if(hasGroups){
-        const groups=[];
-        cols.forEach(c=>{
-          const g=c.group||c.label;
-          const last=groups[groups.length-1];
-          if(last&&last.name===g&&last.iscar===c.iscar)last.count++;
-          else groups.push({name:g,count:1,iscar:c.iscar});
-        });
-        html+=`<thead><tr><th style="background:var(--surf3);padding:4px 8px;text-align:left;font-size:7px;color:var(--text2);border:1px solid var(--border2)" rowspan="2">항목</th>`;
-        groups.forEach(g=>{
-          const style=g.iscar?'color:var(--amber);background:rgba(240,160,32,.08)':'color:var(--text2)';
-          html+=`<th colspan="${g.count}" style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;border:1px solid var(--border2);${style}">${g.name}</th>`;
-        });
-        html+=`</tr><tr>`;
-        cols.forEach(c=>{
-          const s=c.iscar?'color:var(--amber)':'color:var(--text3)';
-          html+=`<th style="background:var(--surf3);padding:3px 6px;text-align:center;font-size:7px;border:1px solid var(--border2);${s}">${c.label}</th>`;
-        });
-        html+=`</tr></thead>`;
-      } else {
-        html+=`<thead><tr><th style="background:var(--surf3);padding:4px 8px;text-align:left;font-size:7px;color:var(--text2);border:1px solid var(--border2)">항목</th>`;
-        cols.forEach(c=>{
-          const s=c.iscar?'color:var(--amber)':'color:var(--text2)';
-          html+=`<th style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;border:1px solid var(--border2);${s}">${c.label}</th>`;
-        });
-        html+=`</tr></thead>`;
-      }
-      html+=`<tbody>`;
-      CT_ROWS.forEach(r=>{
-        const hasVal=cols.some(c=>ctData[r.k]&&ctData[r.k][c.id]);
-        if(!hasVal)return;
-        html+=`<tr><td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text2);background:var(--surf2);border:1px solid var(--border);white-space:nowrap">${r.l}</td>`;
-        cols.forEach(c=>{
-          const val=(ctData[r.k]&&ctData[r.k][c.id])||'';
-          const fieldKey=`ct.${r.k}.${c.id}`;
-          const flagged=flagMap[fieldKey]||flagMap[`${r.k}_${c.iscar?'i':'e'}`];
-          html+=`<td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-${c.id}`,val,flagged)}</td>`;
-        });
-        html+=`</tr>`;
+      // 헤더: 항목 | 기존그룹(colspan=eCols) | ISCAR그룹(colspan=iCols)
+      const thBase='background:var(--surf3);padding:4px 6px;text-align:center;font-size:7px;border:1px solid var(--border2)';
+      html+=`<thead>
+        <tr>
+          <th style="${thBase};text-align:left;color:var(--text2)" rowspan="2">항목</th>
+          ${eCols.length?`<th colspan="${eCols.length}" style="${thBase};color:var(--text2)">${eCols[0]?.group||'기존'}</th>`:''}
+          ${iCols.length?`<th colspan="${iCols.length}" style="${thBase};color:var(--amber);background:rgba(240,160,32,.08)">${iCols[0]?.group||'ISCAR'}</th>`:''}
+        </tr>
+        <tr>
+          ${eCols.map(c=>`<th style="${thBase};color:var(--text3);font-size:6.5px">${c.label}</th>`).join('')}
+          ${iCols.map(c=>`<th style="${thBase};color:var(--amber);font-size:6.5px">${c.label}</th>`).join('')}
+        </tr>
+      </thead>`;
+
+      html+=`<tbody id="vct-tbody">`;
+      CT_ROW_DEFS.forEach(r=>{
+        const row=ctData[r.k];
+        if(!row)return;
+        const rt=row.row_type||'multi';
+        const tdLabel=`<td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text2);background:var(--surf2);border:1px solid var(--border);white-space:nowrap">${r.l}</td>`;
+
+        if(rt==='single'){
+          // 기존 colspan, ISCAR colspan
+          const eVal=row.e||'';
+          const iVal=row.i||'';
+          const eFlag=flagMap[`${r.k}_e`]||flagMap[r.k];
+          const iFlag=flagMap[`${r.k}_i`];
+          html+=`<tr>${tdLabel}
+            ${eCols.length?`<td colspan="${eCols.length}" style="padding:2px 4px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-e`,eVal,eFlag)}</td>`:''}
+            ${iCols.length?`<td colspan="${iCols.length}" style="padding:2px 4px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-i`,iVal,iFlag)}</td>`:''}
+          </tr>`;
+        } else if(rt==='app_row'){
+          // Application 행: 각 열에 공정명 표시 (배경 강조)
+          html+=`<tr style="background:var(--surf3)">${tdLabel}`;
+          eCols.forEach(c=>{
+            const val=row[c.id]||c.label||'';
+            html+=`<td style="padding:3px 4px;border:1px solid var(--border2);text-align:center;font-size:8px;font-weight:600;color:var(--text2)">${renderCTInput(`vct-${r.k}-${c.id}`,val,null)}</td>`;
+          });
+          iCols.forEach(c=>{
+            const val=row[c.id]||c.label||'';
+            html+=`<td style="padding:3px 4px;border:1px solid var(--border2);text-align:center;font-size:8px;font-weight:600;color:var(--amber)">${renderCTInput(`vct-${r.k}-${c.id}`,val,null)}</td>`;
+          });
+          html+=`</tr>`;
+        } else {
+          // multi: 각 열별 값
+          html+=`<tr>${tdLabel}`;
+          eCols.forEach(c=>{
+            const val=row[c.id]||'';
+            const flagged=flagMap[`ct.${r.k}.${c.id}`];
+            html+=`<td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-${c.id}`,val,flagged)}</td>`;
+          });
+          iCols.forEach(c=>{
+            const val=row[c.id]||'';
+            const flagged=flagMap[`ct.${r.k}.${c.id}`];
+            html+=`<td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-${c.id}`,val,flagged)}</td>`;
+          });
+          html+=`</tr>`;
+        }
       });
       html+=`</tbody>`;
     } else {
-      // Legacy ct 구조 fallback
+      // Legacy fallback
       html+=`<thead><tr>
         <th style="background:var(--surf3);padding:4px 8px;text-align:left;font-size:7px;color:var(--text2);border:1px solid var(--border2)">항목</th>
         <th style="background:var(--surf3);padding:4px;text-align:center;font-size:7px;color:var(--text2);border:1px solid var(--border2)">기존</th>
@@ -1909,8 +1958,8 @@ function renderVerifyPanel(data, verified, filename){
         const ve=legacyCt[`${r.k}_e`]||'';const vi=legacyCt[`${r.k}_i`]||'';
         if(!ve&&!vi)return;
         html+=`<tr><td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text2);background:var(--surf2);border:1px solid var(--border)">${r.l}</td>
-          <td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-e`,ve,flagMap[`ct.${r.k}_e`]||flagMap[`${r.k}_e`])}</td>
-          <td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-i`,vi,flagMap[`ct.${r.k}_i`]||flagMap[`${r.k}_i`])}</td>
+          <td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-e`,ve,null)}</td>
+          <td style="padding:2px 3px;border:1px solid var(--border);text-align:center">${renderCTInput(`vct-${r.k}-i`,vi,null)}</td>
         </tr>`;
       });
       html+=`</tbody>`;
@@ -1956,6 +2005,70 @@ function renderCTInput(id, value, flagged){
     style="background:${isFlagged?'rgba(239,68,68,.08)':'transparent'};border:1px solid ${isFlagged?'var(--ng)':'transparent'};border-radius:3px;padding:3px 5px;font-size:10px;color:${isFlagged?'var(--ng)':'var(--text)'};width:100%;text-align:center;font-family:'JetBrains Mono',monospace;outline:none"
     ${isFlagged?`title="${flagged.reason}"`:''}
     onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='${isFlagged?'var(--ng)':'transparent'}'">`;
+}
+
+// 검증 패널 행 추가
+function ctAddRow(){
+  const tbody=document.getElementById('vct-tbody');
+  if(!tbody)return;
+  const label=prompt('행 이름 입력 (예: Max RPM):','');
+  if(!label)return;
+  const cols=document.querySelectorAll('#vct-table thead tr:last-child th');
+  const colCount=cols.length;
+  let tr=`<tr><td style="padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--text2);background:var(--surf2);border:1px solid var(--border)">${label}</td>`;
+  for(let i=0;i<colCount;i++){
+    const id=`vct-custom-${Date.now()}-${i}`;
+    tr+=`<td style="padding:2px 3px;border:1px solid var(--border);text-align:center"><input id="${id}" value="" style="background:transparent;border:1px solid transparent;border-radius:3px;padding:3px 5px;font-size:10px;color:var(--text);width:100%;text-align:center;font-family:'JetBrains Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='transparent'"></td>`;
+  }
+  tr+=`</tr>`;
+  tbody.insertAdjacentHTML('beforeend',tr);
+  toast('행 추가됨','ok');
+}
+
+// 검증 패널 열 추가
+function ctAddCol(isIscar){
+  const table=document.getElementById('vct-table');
+  if(!table)return;
+  const label=prompt(`${isIscar?'ISCAR':'기존'} 열 이름 입력 (예: Plunging):`,isIscar?'Plunging':'Shouldering');
+  if(!label)return;
+  const color=isIscar?'var(--amber)':'var(--text2)';
+  const bg=isIscar?'rgba(240,160,32,.08)':'';
+  // 헤더 1행: colspan 증가
+  const headerRows=table.querySelectorAll('thead tr');
+  if(headerRows.length>=1){
+    const groupThs=headerRows[0].querySelectorAll('th');
+    const targetTh=isIscar?groupThs[groupThs.length-1]:groupThs[Math.max(1,groupThs.length-1)];
+    if(targetTh){const span=parseInt(targetTh.getAttribute('colspan')||1);targetTh.setAttribute('colspan',span+1);}
+    // 헤더 2행: 새 th 추가
+    if(headerRows.length>=2){
+      const newTh=document.createElement('th');
+      newTh.style.cssText=`background:var(--surf3);padding:3px 6px;text-align:center;font-size:6.5px;border:1px solid var(--border2);color:${color}`;
+      newTh.textContent=label;
+      if(isIscar)headerRows[1].appendChild(newTh);
+      else{
+        const ths=headerRows[1].querySelectorAll('th');
+        const iscarStart=Array.from(ths).findIndex((th,i)=>th.style.color.includes('amber'));
+        if(iscarStart>0)headerRows[1].insertBefore(newTh,ths[iscarStart]);
+        else headerRows[1].appendChild(newTh);
+      }
+    }
+  }
+  // tbody 각 행에 td 추가
+  table.querySelectorAll('tbody tr').forEach(tr=>{
+    const id=`vct-newcol-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;
+    const td=document.createElement('td');
+    td.style.cssText='padding:2px 3px;border:1px solid var(--border);text-align:center';
+    td.innerHTML=`<input id="${id}" value="" style="background:transparent;border:1px solid transparent;border-radius:3px;padding:3px 5px;font-size:10px;color:var(--text);width:100%;text-align:center;font-family:'JetBrains Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='transparent'">`;
+    if(isIscar)tr.appendChild(td);
+    else{
+      const tds=tr.querySelectorAll('td');
+      // ISCAR 열 시작 전에 삽입 (마지막 기존 열 뒤)
+      const eCount=document.querySelectorAll('#vct-table thead tr:first-child th').length;
+      if(tds.length>1)tr.insertBefore(td,tds[tds.length-1]);
+      else tr.appendChild(td);
+    }
+  });
+  toast(`${isIscar?'ISCAR':'기존'} 열 추가됨`,'ok');
 }
 
 async function reRunAnalysis(){
