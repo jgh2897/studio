@@ -1641,8 +1641,13 @@ JSON 구조:
     try{
       const jpegB64=await pdfToJpeg(file);
       imgContent={type:'image',source:{type:'base64',media_type:'image/jpeg',data:jpegB64}};
+      toast('📄 PDF → 이미지 변환 완료','info');
     }catch(jpegErr){
-      console.warn('PDF→JPEG 변환 실패, PDF 직접 전송으로 대체:', jpegErr.message);
+      console.warn('PDF→JPEG 변환 실패:', jpegErr.message);
+      // 파일 크기 체크 — 100KB 초과 시 토큰 초과 위험
+      if(file.size > 100*1024){
+        throw new Error(`PDF 변환 실패 + 파일 크기 초과 (${(file.size/1024).toFixed(0)}KB). PDF를 GoodNotes에서 더 낮은 품질로 내보내거나 이미지로 저장 후 업로드해주세요.`);
+      }
       const rawB64=await fileToB64(file);
       imgContent={type:'document',source:{type:'base64',media_type:'application/pdf',data:rawB64}};
     }
@@ -1751,24 +1756,38 @@ function fileToB64(file){
 
 // PDF → JPEG 변환 (토큰 절감용, PDF.js 사용)
 async function pdfToJpeg(file, scale=1.2){
-  // PDF.js 레거시 빌드 사용 (loadScript 호환)
+  // PDF.js 없이 처리 — PDF를 Object URL로 열어 iframe에 렌더링 후 캡처
+  // 가장 안정적인 방법: pdf.js 레거시 UMD 빌드
+  const PDFJS_URL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.min.js';
+  const WORKER_URL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
+
   if(!window.pdfjsLib){
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.min.js');
-    await new Promise(r=>setTimeout(r,600));
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src=PDFJS_URL;
+      s.onload=resolve;
+      s.onerror=()=>reject(new Error('PDF.js CDN 로드 실패'));
+      document.head.appendChild(s);
+    });
+    // 로드 완료 후 worker 설정
     if(window.pdfjsLib){
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc=WORKER_URL;
+    } else {
+      throw new Error('pdfjsLib 초기화 실패');
     }
   }
-  if(!window.pdfjsLib) throw new Error('PDF.js 로드 실패');
+
   const arrayBuffer=await file.arrayBuffer();
-  const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  const loadingTask=window.pdfjsLib.getDocument({data:new Uint8Array(arrayBuffer)});
+  const pdf=await loadingTask.promise;
   const page=await pdf.getPage(1);
   const viewport=page.getViewport({scale});
   const canvas=document.createElement('canvas');
-  canvas.width=viewport.width;
-  canvas.height=viewport.height;
-  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-  const dataUrl=canvas.toDataURL('image/jpeg',0.88);
+  canvas.width=Math.floor(viewport.width);
+  canvas.height=Math.floor(viewport.height);
+  const ctx=canvas.getContext('2d');
+  await page.render({canvasContext:ctx,viewport}).promise;
+  const dataUrl=canvas.toDataURL('image/jpeg',0.85);
   return dataUrl.split(',')[1];
 }
 
