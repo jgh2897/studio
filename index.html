@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ISCAR Report Studio</title>
+<!-- PDF.js 미리 로드 (PDF→JPEG 변환용) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.min.js"></script>
+<script>
+  if(window.pdfjsLib){
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
+  }
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 :root{
@@ -1756,27 +1763,7 @@ function fileToB64(file){
 
 // PDF → JPEG 변환 (토큰 절감용, PDF.js 사용)
 async function pdfToJpeg(file, scale=1.2){
-  // PDF.js 없이 처리 — PDF를 Object URL로 열어 iframe에 렌더링 후 캡처
-  // 가장 안정적인 방법: pdf.js 레거시 UMD 빌드
-  const PDFJS_URL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.min.js';
-  const WORKER_URL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js';
-
-  if(!window.pdfjsLib){
-    await new Promise((resolve,reject)=>{
-      const s=document.createElement('script');
-      s.src=PDFJS_URL;
-      s.onload=resolve;
-      s.onerror=()=>reject(new Error('PDF.js CDN 로드 실패'));
-      document.head.appendChild(s);
-    });
-    // 로드 완료 후 worker 설정
-    if(window.pdfjsLib){
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc=WORKER_URL;
-    } else {
-      throw new Error('pdfjsLib 초기화 실패');
-    }
-  }
-
+  if(!window.pdfjsLib) throw new Error('PDF.js 로드 실패 — 페이지를 새로고침 해주세요');
   const arrayBuffer=await file.arrayBuffer();
   const loadingTask=window.pdfjsLib.getDocument({data:new Uint8Array(arrayBuffer)});
   const pdf=await loadingTask.promise;
