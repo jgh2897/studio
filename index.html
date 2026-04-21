@@ -480,7 +480,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.6</div></div>
+  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.7</div></div>
   <div class="tabs">
     <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력 <span style="font-size:8px;background:rgba(240,160,32,.2);color:var(--amber);padding:1px 5px;border-radius:3px;margin-left:3px">기록이</span></div>
     <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
@@ -679,8 +679,8 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
           <div class="slbl" style="display:flex;align-items:center;justify-content:space-between">
             <span>절삭 조건 비교</span>
             <div style="display:flex;gap:4px;align-items:center">
-              <button class="btn btn-ghost btn-sm" onclick="addCtCol()" style="font-size:9px;padding:2px 7px">+ 열 추가</button>
-              <button class="btn btn-ghost btn-sm" onclick="addCtColGroup()" style="font-size:9px;padding:2px 7px">+ 그룹 추가</button>
+              <button class="btn btn-ghost btn-sm" onclick="addCtCol(false)" style="font-size:9px;padding:2px 7px">+ 기존 공정</button>
+              <button class="btn btn-ghost btn-sm" onclick="addCtCol(true)" style="font-size:9px;padding:2px 7px;color:var(--amber)">+ ISCAR 공정</button>
               <button class="btn btn-ghost btn-sm" onclick="resetCtCols()" style="font-size:9px;padding:2px 7px">초기화</button>
             </div>
           </div>
@@ -707,7 +707,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
             <div class="cost-card"><div class="cl">ISCAR CPP</div><div id="c-cpp-new-val" style="text-align:center;font-size:13px;font-weight:700;color:var(--amber);padding:4px 0">-</div><div class="cu">원/코너</div></div>
             <div class="cost-card"><div class="cl">절감률</div><div id="c-cpp-rate" style="text-align:center;font-size:14px;font-weight:700;color:var(--ok);padding:4px 0">-</div><div class="cu">%</div></div>
           </div>
-          <div style="display:none"><input id="c-cpp" placeholder=""><input id="c-save" placeholder=""></div>
+          <div style="display:none"><input id="c-cpp" placeholder=""><input id="c-save-hidden" placeholder=""></div>
           <div class="fi" style="margin-top:6px"><label>원가 절감 메모</label><input id="c-save" placeholder="예: 1.6% 절감, 공구비 800→880원"></div>
         </div>
         <div class="fi">
@@ -1825,7 +1825,7 @@ async function pdfExtractText(file){
 }
 
 // PDF → JPEG 변환 (손글씨 인식용, 텍스트 추출과 병행)
-async function pdfToJpeg(file, scale=1.5){
+async function pdfToJpeg(file, scale=0.9){
   if(!window.pdfjsLib) throw new Error('PDF.js 로드 실패 — 페이지를 새로고침 해주세요');
   const arrayBuffer=await file.arrayBuffer();
   const loadingTask=window.pdfjsLib.getDocument({data:new Uint8Array(arrayBuffer)});
@@ -2148,25 +2148,54 @@ function confirmAndSave(){
     document.getElementById('m-ind').value=gv('v-industry')||d.industry||'';
     document.getElementById('m-proc').value=gv('v-process')||d.process||'';
 
-    // ── 새 다중 열 CT 구조 처리 ──
-    const cols=d._ctCols||[];
+    // ── CT 테이블 채우기 — ct_groups 구조 ──
+    const groups=d._ctGroups||[];
     const ctDataSrc=d._ctData||{};
-    if(cols.length>0){
-      // ctCols 업데이트 후 테이블 재빌드
-      ctCols=cols.map(c=>({id:c.id,label:c.label,iscar:c.iscar,group:c.group||''}));
-      buildCT();
-      // 검증 패널에서 수정된 값으로 채우기
-      CT_ROWS.forEach(r=>{
-        cols.forEach(c=>{
-          const el=document.getElementById(`ct-${r.k}-${c.id}`);
-          const verifyEl=document.getElementById(`vct-${r.k}-${c.id}`);
-          if(el){
-            el.value=(verifyEl?verifyEl.value:'')||(ctDataSrc[r.k]&&ctDataSrc[r.k][c.id])||'';
-          }
+
+    if(groups.length>0){
+      // ctCols 재구성 (기존 테이블용)
+      const newCols=[];
+      groups.forEach(g=>{
+        g.processes.forEach(p=>{
+          newCols.push({id:p.id,label:p.label,iscar:g.iscar,group:g.name});
         });
       });
+      ctCols=newCols;
+      buildCT();
+
+      // 검증 패널 값 → CT 테이블로 매핑
+      const CT_KEY_MAP={brand:'brand',holder:'holder',insert:'insert',grade:'grade',dc:'dc',
+        vc:'vc',rpm:'rpm',fz:'fz',zeff:'zeff',f:'f',ae:'ae',ap:'ap',
+        coolant:'coolant',ct:'ct',tl:'tl',corner:'corner',remark:'remark'};
+
+      Object.entries(CT_KEY_MAP).forEach(([k,ctKey])=>{
+        const row=ctDataSrc[k]||{};
+        const rt=row.row_type||'multi';
+
+        if(rt==='single'){
+          // 단일열: 그룹별로 채우기
+          groups.forEach(g=>{
+            const val=row[g.id]||row[g.iscar?'i':'e']||'';
+            g.processes.forEach(p=>{
+              const el=document.getElementById(`ct-${ctKey}-${p.id}`);
+              const verEl=document.getElementById(`vct-${k}-${g.id}`);
+              if(el)el.value=(verEl?verEl.value:'')||val;
+            });
+          });
+        } else if(rt==='multi'||rt==='app_row'){
+          // 다중열: 공정별로 채우기
+          groups.forEach(g=>{
+            g.processes.forEach(p=>{
+              const el=document.getElementById(`ct-${ctKey}-${p.id}`);
+              const verEl=document.getElementById(`vct-${k}-${p.id}`);
+              const val=row[p.id]||'';
+              if(el)el.value=(verEl?verEl.value:'')||val;
+            });
+          });
+        }
+      });
     } else if(d.ct){
-      // legacy ct 구조 fallback
+      // legacy fallback
       const ctKeyMap={brand:'brand',holder:'holder',insert:'insert',grade:'grade',dc:'dc',vc:'vc',rpm:'rpm',fz:'fz',teeth:'zeff',f:'f',ae:'ae',ap:'ap',coolant:'coolant',ct:'ct',tl:'tl',corner:'corner',remark:'remark'};
       Object.keys(ctKeyMap).forEach(k=>{
         const ctKey=ctKeyMap[k];
