@@ -480,7 +480,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.7</div></div>
+  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.8</div></div>
   <div class="tabs">
     <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력 <span style="font-size:8px;background:rgba(240,160,32,.2);color:var(--amber);padding:1px 5px;border-radius:3px;margin-left:3px">기록이</span></div>
     <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
@@ -839,6 +839,17 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
           <div class="dz-sub" style="font-size:9px">일일업무일지 복수 선택 가능</div>
         </div>
         <div id="w-pdf-list" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <!-- 주간보고 docx 업로드 → 공구비/효과금액 추출 -->
+      <div>
+        <div class="p5-sec">📋 이전 주간보고 업로드 <span style="font-size:8px;color:var(--teal);font-family:'JetBrains Mono',monospace">선택사항</span></div>
+        <div style="font-size:9px;color:var(--text3);margin:4px 0 6px">이전 주간보고 docx를 올리면 공구비·효과금액 등을 자동 추출합니다</div>
+        <div class="dz" id="w-docx-dz" style="padding:10px;margin-bottom:4px;border-color:var(--teal);opacity:.7" onclick="document.getElementById('w-docx-input').click()">
+          <input type="file" id="w-docx-input" accept=".docx" style="display:none" onchange="wHandleDocx(event)">
+          <div class="dz-ico" style="font-size:14px">📝</div>
+          <div class="dz-ttl" style="font-size:10px">주간보고 .docx 업로드</div>
+        </div>
+        <div id="w-docx-status" style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace"></div>
       </div>
       <div><div class="p5-sec">앱 내 문서 선택</div>
         <div style="font-size:9px;color:var(--text3);margin:4px 0 6px">앱에 저장된 현장기록 선택 (선택사항)</div>
@@ -1499,16 +1510,17 @@ async function processPhotos(files){
   toast(`📸 ${files.length}장 처리 중...`,'info');
   for(const file of files){
     const b64=await compressImage(file);
-    // 일단 unknown으로 저장, AI 분류는 PDF 분석 시 같이 진행
     _uploadedPhotos.push({b64,type:'unknown',name:file.name,originalName:file.name});
   }
   renderPhotoPreview();
-  // AI로 사진 분류
-  if(_uploadedPhotos.length>0)classifyPhotos();
+  // AI 분류 — Promise 저장해서 PDF 분석 시 await 가능하게
+  if(_uploadedPhotos.length>0) _classifyPromise=classifyPhotos();
 }
 
+let _classifyPromise=null;
+
 async function classifyPhotos(){
-  if(!getApiKey()){toast('API 키를 입력해주세요','err');return;}
+  if(!getApiKey()){return;}
   try{
     const unclassified=_uploadedPhotos.filter(p=>p.type==='unknown');
     if(!unclassified.length)return;
@@ -1527,7 +1539,6 @@ async function classifyPhotos(){
     toast('📸 사진 분류 완료','ok');
   }catch(e){
     console.error('사진 분류 실패:',e);
-    // 분류 실패해도 unknown으로 유지
   }
 }
 
@@ -1574,6 +1585,13 @@ async function startPDFAnalysis(file){
     </div>`;
 
   try{
+    // 사진 분류가 진행 중이면 먼저 완료 대기
+    if(_classifyPromise){
+      setStep&&setStep('step1','var(--amber)','▶ 사진 분류 대기 중...');
+      await _classifyPromise;
+      _classifyPromise=null;
+    }
+
     // PDF → JPEG 변환으로 토큰 절감 (PDF 직접 전송 시 214K 토큰 초과 문제 해결)
 
     // ── 1단계: 추출 ──
@@ -2720,6 +2738,100 @@ function wHandlePDFs(e){
   });
   e.target.value='';
 }
+
+// 주간보고 docx 업로드 → 공구비/효과금액 자동 추출
+async function wHandleDocx(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  e.target.value='';
+  const statusEl=document.getElementById('w-docx-status');
+  if(statusEl)statusEl.textContent='📝 분석 중...';
+
+  try{
+    // mammoth으로 docx → 텍스트 추출
+    if(!window.mammoth){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const arrayBuffer=await file.arrayBuffer();
+    const result=await window.mammoth.extractRawText({arrayBuffer});
+    const text=result.value||'';
+
+    if(!text.trim()){
+      if(statusEl)statusEl.textContent='⚠️ 텍스트 추출 실패';
+      return;
+    }
+
+    // AI로 공구비/효과금액 추출
+    if(!getApiKey()){if(statusEl)statusEl.textContent='⚠️ API 키 없음';return;}
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:2000,
+        system:'주간업무보고서에서 데이터를 추출하세요. 순수 JSON만 출력하세요.',
+        messages:[{role:'user',content:`아래 주간보고서 텍스트에서 각 업무 항목의 정보를 추출하세요.
+
+${text.slice(0,6000)}
+
+JSON 구조:
+{
+  "items": [
+    {
+      "customer": "고객사명",
+      "title": "업무제목",
+      "machine_status": "장비현황",
+      "tool_cost": "공구비 (월 X,000만원 포함)",
+      "parts": "가공품",
+      "part": "부품명",
+      "material": "소재",
+      "machine": "장비명",
+      "existing_tool": "기존 공구 및 조건",
+      "existing_condition": "",
+      "problem": "문제점",
+      "iscar_tool": "이스카 공구 및 조건",
+      "iscar_condition": "",
+      "work_details": "업무 내용",
+      "effect": "효과금액 (없으면 빈문자열)"
+    }
+  ],
+  "notes": "특이사항"
+}`}]})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.map(c=>c.text||'').join('').trim();
+    const extracted=JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());
+
+    // _lastWeeklyReport에 병합
+    if(!_lastWeeklyReport)_lastWeeklyReport={items:[],notes:''};
+    // 기존 항목에 공구비/효과금액 업데이트, 없으면 추가
+    (extracted.items||[]).forEach(newItem=>{
+      const existing=(_lastWeeklyReport.items||[]).find(i=>
+        i.customer===newItem.customer||(i.title||'').includes(newItem.customer||''));
+      if(existing){
+        if(newItem.tool_cost&&!existing.tool_cost)existing.tool_cost=newItem.tool_cost;
+        if(newItem.effect&&!existing.effect)existing.effect=newItem.effect;
+        if(newItem.machine_status&&!existing.machine_status)existing.machine_status=newItem.machine_status;
+        if(newItem.parts&&!existing.parts)existing.parts=newItem.parts;
+      }
+    });
+
+    const count=(extracted.items||[]).length;
+    if(statusEl)statusEl.textContent=`✅ ${count}개 항목 추출 완료`;
+    toast(`주간보고 분석 완료 — ${count}개 항목`,'ok');
+
+    // 렌더링 업데이트
+    if(_lastWeeklyReport&&_lastWeeklyReport.items&&_lastWeeklyReport.items.length){
+      weeklyTxt=buildWeeklyTxt(_lastWeeklyReport);
+      renderWeeklyGN(_lastWeeklyReport);
+    }
+  }catch(err){
+    console.error(err);
+    if(statusEl)statusEl.textContent='❌ 분석 실패: '+err.message;
+    toast('분석 실패: '+err.message,'err');
+  }
+}
 function renderWPDFList(){
   const el=document.getElementById('w-pdf-list');if(!el)return;
   if(!wPDFs.length){el.innerHTML='';return;}
@@ -2961,187 +3073,149 @@ async function dlWeekly(){
   if(!weeklyTxt){toast('먼저 AI 생성을 해주세요','err');return;}
   toast('docx 생성 중...','info');
   try{
-    // docxjs CDN 로드
     if(!window.docx){
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/build/index.min.js');
       await new Promise(r=>setTimeout(r,300));
     }
     const D=window.docx;
     const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
-           WidthType,BorderStyle,ShadingType,AlignmentType,VerticalAlign,
-           HeadingLevel}=D;
+           WidthType,BorderStyle,AlignmentType,VerticalAlign}=D;
 
-    // 현재 주간보고 데이터
     const from=document.getElementById('w-from').value;
     const to=document.getElementById('w-to').value;
     const auth=document.getElementById('w-auth').value||'담당자';
     const week=document.getElementById('w-week').value||'';
-
-    // 파싱 — weeklyTxt에서 report 재구성하거나 _lastWeeklyReport 사용
     const r=_lastWeeklyReport;
     if(!r){toast('보고서 데이터 없음, 재생성 필요','err');return;}
 
-    const border={style:BorderStyle.SINGLE,size:4,color:'C8B898'};
-    const borders={top:border,bottom:border,left:border,right:border};
-    const hdrBorder={style:BorderStyle.SINGLE,size:4,color:'1a1a2e'};
-    const hdrBorders={top:hdrBorder,bottom:hdrBorder,left:hdrBorder,right:hdrBorder};
+    // 원본 양식 기준 칼럼 너비
+    const COL1=1080, COL2=9680, TW=COL1+COL2;
+    const bdr={style:BorderStyle.SINGLE,size:8,color:'auto'};
+    const noBdr={style:BorderStyle.NIL};
 
-    // 페이지 너비: A4 11906 - 마진 1440*2 = 9026
-    const TW=9026;
-    const LW=1400; // 왼쪽 레이블 열
-    const RW=TW-LW; // 내용 열
-
-    function cell(text,opts={}){
-      const {w=RW,bold=false,shade='',color='000000',fontSize=18,labelCol=false,vAlign=VerticalAlign.TOP}=opts;
+    function mkCell(children, w, borders, opts={}){
       return new TableCell({
         width:{size:w,type:WidthType.DXA},
         borders,
-        shading:shade?{fill:shade,type:ShadingType.CLEAR}:{fill:'FFFFFF',type:ShadingType.CLEAR},
-        verticalAlign:vAlign,
-        margins:{top:60,bottom:60,left:100,right:100},
-        children:[new Paragraph({
-          children:[new TextRun({text:String(text||''),bold,color,size:fontSize,font:'Noto Sans KR'})],
-          alignment:labelCol?AlignmentType.CENTER:AlignmentType.LEFT
-        })]
+        margins:{top:0,bottom:0,left:108,right:108},
+        verticalAlign:VerticalAlign.CENTER,
+        ...opts,
+        children
       });
     }
 
+    function mkTxt(text, opts={}){
+      return new TextRun({text:String(text||''),font:'Malgun Gothic',size:20,...opts});
+    }
+
+    function mkPara(runs, opts={}){
+      if(typeof runs==='string') runs=[mkTxt(runs)];
+      return new Paragraph({children:runs,spacing:{line:276,lineRule:'auto'},alignment:AlignmentType.LEFT,...opts});
+    }
+
+    // 레이블 셀 (왼쪽)
     function labelCell(text){
-      return new TableCell({
-        width:{size:LW,type:WidthType.DXA},
-        borders,
-        shading:{fill:'F0ECE0',type:ShadingType.CLEAR},
-        verticalAlign:VerticalAlign.TOP,
-        margins:{top:60,bottom:60,left:100,right:100},
-        children:[new Paragraph({
-          children:[new TextRun({text,bold:true,size:17,font:'Noto Sans KR',color:'333333'})],
-          alignment:AlignmentType.CENTER
-        })]
-      });
+      return mkCell(
+        [mkPara([mkTxt(text)])],
+        COL1,
+        {top:bdr,left:bdr,bottom:bdr,right:bdr}
+      );
     }
 
-    function multilineCell(text,w=RW){
-      const lines=(text||'').split('\n');
-      return new TableCell({
-        width:{size:w,type:WidthType.DXA},
-        borders,
-        shading:{fill:'FFFFFF',type:ShadingType.CLEAR},
-        verticalAlign:VerticalAlign.TOP,
-        margins:{top:60,bottom:60,left:100,right:100},
-        children:lines.map(line=>new Paragraph({
-          children:[new TextRun({text:line,size:18,font:'Noto Sans KR'})],
-          spacing:{after:20}
-        }))
-      });
+    // 내용 셀 (오른쪽) — 여러 단락
+    function contentCell(paras){
+      return mkCell(
+        paras,
+        COL2,
+        {top:bdr,left:noBdr,bottom:bdr,right:bdr},
+        {verticalAlign:VerticalAlign.TOP,margins:{top:60,bottom:60,left:108,right:108}}
+      );
     }
 
-    // 섹션 헤더 셀 (기본정보/기존TOOL 등)
-    function sectionHeader(text,color='B03020'){
-      return new TableCell({
-        width:{size:TW,type:WidthType.DXA},
-        columnSpan:2,
-        borders,
-        shading:{fill:'FDF5F0',type:ShadingType.CLEAR},
-        margins:{top:40,bottom:40,left:120,right:120},
-        children:[new Paragraph({
-          children:[new TextRun({text,bold:true,size:16,font:'JetBrains Mono',color})]
-        })]
-      });
+    // 업무내용 단락 빌더
+    function buildWorkParas(item){
+      const ps=[];
+      // [기본정보]
+      ps.push(mkPara([mkTxt('[기본정보]',{bold:true})]));
+      if(item.part||item.material)
+        ps.push(mkPara([mkTxt(`부품: ${item.part||''}  소재: ${item.material||''}  장비: ${item.machine||''}`)]));
+
+      // [기존 TOOL]
+      if(item.existing_tool||item.existing_condition){
+        ps.push(mkPara([mkTxt('[기존 TOOL 및 가공조건]',{bold:true})]));
+        if(item.existing_tool)(item.existing_tool.split('\n')).forEach(l=>ps.push(mkPara([mkTxt(l)])));
+        if(item.existing_condition)(item.existing_condition.split('\n')).forEach(l=>ps.push(mkPara([mkTxt(l)])));
+        if(item.problem)ps.push(mkPara([mkTxt(`문제점: ${item.problem}`,{bold:true})]));
+      }
+
+      // [이스카 TOOL]
+      if(item.iscar_tool||item.iscar_condition){
+        ps.push(mkPara([mkTxt('[이스카 TOOL 및 가공조건]',{bold:true})]));
+        if(item.iscar_tool)(item.iscar_tool.split('\n')).forEach(l=>ps.push(mkPara([mkTxt(l)])));
+        if(item.iscar_condition)(item.iscar_condition.split('\n')).forEach(l=>ps.push(mkPara([mkTxt(l)])));
+      }
+
+      // [업무 내용]
+      if(item.work_details){
+        ps.push(mkPara([mkTxt('[업무 내용]',{bold:true})]));
+        item.work_details.split('\n').forEach(l=>ps.push(mkPara([mkTxt(l)])));
+      }
+
+      // 효과금액
+      if(item.effect)
+        ps.push(mkPara([mkTxt(`효과금액: ${item.effect.replace(/^효과금액:\s*/,'')}`,{bold:true})]));
+
+      return ps;
     }
 
     const children=[];
 
     // 제목
-    children.push(new Paragraph({
-      children:[new TextRun({text:'7) 기술사원 업무 현황',bold:true,size:26,font:'Noto Sans KR',color:'1a1a2e'})],
-      spacing:{after:200}
-    }));
-    children.push(new Paragraph({
-      children:[new TextRun({text:`기간: ${from}${to&&from!==to?'~'+to:''} ${week}  담당: ${auth}`,size:18,font:'Noto Sans KR',color:'666666'})],
-      spacing:{after:280}
-    }));
+    children.push(mkPara([mkTxt('7) 기술사원 업무 현황',{bold:true,size:24})]));
+    children.push(mkPara(''));
 
     // 각 항목
     (r.items||[]).forEach((item,idx)=>{
-      // 항목 제목
-      children.push(new Paragraph({
-        children:[new TextRun({text:item.title||`${idx+1}) ${item.customer||''}`,bold:true,size:22,font:'Noto Sans KR',color:'B03020'})],
-        spacing:{before:200,after:80}
-      }));
+      // 항목 제목 (N) 고객사 – 제목)
+      children.push(mkPara([mkTxt(`${idx+1}) ${item.customer||''} – ${(item.title||'').replace(/^\d+\)\s*/,'').replace(/^[^–]*–\s*/,'')}`,{bold:true})]));
 
-      // 장비현황/공구비/가공품 테이블
-      const infoRows=[];
-      if(item.machine_status)infoRows.push(new TableRow({children:[labelCell('장비현황'),multilineCell(item.machine_status)]}));
-      if(item.tool_cost)infoRows.push(new TableRow({children:[labelCell('공 구 비'),multilineCell(item.tool_cost)]}));
-      if(item.parts)infoRows.push(new TableRow({children:[labelCell('가 공 품'),multilineCell(item.parts)]}));
-
-      // 업무내용 행 (내부에 서브섹션들)
-      const workLines=[];
-
-      // 기본정보
-      workLines.push(new Paragraph({children:[new TextRun({text:'[기본정보]',bold:true,size:17,font:'Noto Sans KR',color:'B03020'})],spacing:{after:40}}));
-      if(item.part||item.material)workLines.push(new Paragraph({children:[new TextRun({text:`부품: ${item.part||''}  소재: ${item.material||''}`,size:18,font:'Noto Sans KR'})],spacing:{after:30}}));
-      if(item.machine)workLines.push(new Paragraph({children:[new TextRun({text:`장비: ${item.machine}`,size:18,font:'Noto Sans KR'})],spacing:{after:60}}));
-
-      // 기존 TOOL
-      if(item.existing_tool||item.existing_condition){
-        workLines.push(new Paragraph({children:[new TextRun({text:'[기존 TOOL 및 가공조건]',bold:true,size:17,font:'Noto Sans KR',color:'5A4A35'})],spacing:{before:60,after:40}}));
-        if(item.existing_tool)workLines.push(new Paragraph({children:[new TextRun({text:item.existing_tool,size:17,font:'Noto Sans KR'})],spacing:{after:30}}));
-        if(item.existing_condition)(item.existing_condition.split('\n')).forEach(l=>workLines.push(new Paragraph({children:[new TextRun({text:l,size:17,font:'Noto Sans KR'})],spacing:{after:20}})));
-        if(item.problem)workLines.push(new Paragraph({children:[new TextRun({text:`문제점: ${item.problem}`,bold:true,size:17,font:'Noto Sans KR',color:'B03020'})],spacing:{after:30}}));
-      }
-
-      // 이스카 TOOL
-      if(item.iscar_tool||item.iscar_condition){
-        workLines.push(new Paragraph({children:[new TextRun({text:'[이스카 TOOL 및 가공조건]',bold:true,size:17,font:'Noto Sans KR',color:'0D8A80'})],spacing:{before:60,after:40}}));
-        if(item.iscar_tool)workLines.push(new Paragraph({children:[new TextRun({text:item.iscar_tool,size:17,font:'Noto Sans KR'})],spacing:{after:30}}));
-        if(item.iscar_condition)(item.iscar_condition.split('\n')).forEach(l=>workLines.push(new Paragraph({children:[new TextRun({text:l,size:17,font:'Noto Sans KR'})],spacing:{after:20}})));
-      }
-
-      // 업무 내용
-      if(item.work_details){
-        workLines.push(new Paragraph({children:[new TextRun({text:'[업무 내용]',bold:true,size:17,font:'Noto Sans KR',color:'1A4DB5'})],spacing:{before:60,after:40}}));
-        item.work_details.split('\n').forEach(l=>workLines.push(new Paragraph({children:[new TextRun({text:l,size:17,font:'Noto Sans KR'})],spacing:{after:30}})));
-      }
-
-      // 효과금액
-      if(item.effect)workLines.push(new Paragraph({children:[new TextRun({text:`효과금액: ${item.effect.replace(/^효과금액:\s*/,'')}`,bold:true,size:18,font:'Noto Sans KR',color:'1A7A3E'})],spacing:{before:80,after:40}}));
-
-      const workCell=new TableCell({
-        width:{size:RW,type:WidthType.DXA},
-        borders,
-        shading:{fill:'FFFFFF',type:ShadingType.CLEAR},
-        verticalAlign:VerticalAlign.TOP,
-        margins:{top:80,bottom:80,left:120,right:120},
-        children:workLines
+      // 테이블
+      const rows=[];
+      const mkRow=(label,paras,isFirst=false)=>new TableRow({
+        height:{value:312},
+        children:[
+          mkCell([mkPara([mkTxt(label)])],COL1,
+            {top:isFirst?bdr:noBdr,left:bdr,bottom:bdr,right:bdr},
+            {verticalAlign:VerticalAlign.CENTER}),
+          mkCell(typeof paras==='string'?[mkPara([mkTxt(paras)])]:paras,COL2,
+            {top:isFirst?bdr:noBdr,left:noBdr,bottom:bdr,right:bdr},
+            {verticalAlign:VerticalAlign.TOP,margins:{top:60,bottom:60,left:108,right:108}})
+        ]
       });
 
-      infoRows.push(new TableRow({children:[labelCell('업무내용'),workCell]}));
+      rows.push(mkRow('장비현황',item.machine_status||'',true));
+      rows.push(mkRow('공 구 비',item.tool_cost||''));
+      rows.push(mkRow('가 공 품',item.parts||item.product||''));
+      rows.push(mkRow('업무내용',buildWorkParas(item)));
 
-      children.push(new Table({
-        width:{size:TW,type:WidthType.DXA},
-        columnWidths:[LW,RW],
-        rows:infoRows
-      }));
-      children.push(new Paragraph({children:[new TextRun('')],spacing:{after:160}}));
+      children.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[COL1,COL2],rows}));
+      children.push(mkPara(''));
     });
 
     // 특이사항
     if(r.notes){
-      children.push(new Paragraph({children:[new TextRun({text:'특이사항 / 다음 주 예정',bold:true,size:19,font:'Noto Sans KR',color:'5A4A35'})],spacing:{before:120,after:60}}));
-      r.notes.split('\n').forEach(l=>children.push(new Paragraph({children:[new TextRun({text:l,size:18,font:'Noto Sans KR'})],spacing:{after:40}})));
+      children.push(mkPara([mkTxt('특이사항 / 다음 주 예정',{bold:true})]));
+      r.notes.split('\n').forEach(l=>children.push(mkPara([mkTxt(l)])));
+      children.push(mkPara(''));
     }
 
     // 감사합니다
-    children.push(new Paragraph({
-      children:[new TextRun({text:'감사합니다.',bold:true,size:22,font:'Noto Sans KR',color:'1a1a2e'})],
-      alignment:AlignmentType.RIGHT,
-      spacing:{before:240}
-    }));
+    children.push(mkPara([mkTxt('감사합니다.',{bold:true})],{alignment:AlignmentType.LEFT}));
 
     const doc=new Document({
+      styles:{default:{document:{run:{font:'Malgun Gothic',size:20}}}},
       sections:[{
-        properties:{page:{size:{width:11906,height:16838},margin:{top:1008,right:1008,bottom:1008,left:1008}}},
+        properties:{page:{size:{width:11906,height:16838},margin:{top:720,right:720,bottom:720,left:720}}},
         children
       }]
     });
@@ -3155,14 +3229,9 @@ async function dlWeekly(){
   }catch(e){
     console.error(e);
     toast('docx 생성 실패: '+e.message,'err');
-    // fallback to txt
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([weeklyTxt],{type:'text/plain;charset=utf-8'}));
-    a.download=`주간보고_${document.getElementById('w-auth').value||'담당자'}_${document.getElementById('w-week').value||tod()}.txt`;
-    a.click();
-    toast('txt로 대체 다운로드','info');
   }
 }
+
 function printWeekly(){
   const vp=document.getElementById('w5-vp');
   if(!vp||!vp.innerHTML.includes('gn-book'))return;
