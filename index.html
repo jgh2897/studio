@@ -1825,7 +1825,7 @@ async function pdfExtractText(file){
 }
 
 // PDF → JPEG 변환 (손글씨 인식용, 텍스트 추출과 병행)
-async function pdfToJpeg(file, scale=0.9){
+async function pdfToJpeg(file, scale=1.5){
   if(!window.pdfjsLib) throw new Error('PDF.js 로드 실패 — 페이지를 새로고침 해주세요');
   const arrayBuffer=await file.arrayBuffer();
   const loadingTask=window.pdfjsLib.getDocument({data:new Uint8Array(arrayBuffer)});
