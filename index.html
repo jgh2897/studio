@@ -480,14 +480,11 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.8</div></div>
+  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.9</div></div>
   <div class="tabs">
-    <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력 <span style="font-size:8px;background:rgba(240,160,32,.2);color:var(--amber);padding:1px 5px;border-radius:3px;margin-left:3px">기록이</span></div>
-    <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>검토·편집</div>
-    <div class="tab" id="t3" onclick="goP('p3')"><div class="tab-n">3</div>PPT 생성 <span style="font-size:8px;background:rgba(139,92,246,.2);color:var(--violet);padding:1px 5px;border-radius:3px;margin-left:3px">제안이</span></div>
-    <div class="tab" id="t4" onclick="goP('p4')"><div class="tab-n">4</div>굿노트 뷰</div>
-    <div class="tab" id="t5" onclick="goP('p5')"><div class="tab-n">5</div>주간보고 <span style="font-size:8px;background:rgba(34,184,176,.2);color:var(--teal);padding:1px 5px;border-radius:3px;margin-left:3px">보고이</span></div>
-    <div class="tab" id="t6" onclick="goP('p6')" style="color:#60a5fa"><div class="tab-n" style="border-color:#60a5fa">6</div>TEST DB</div>
+    <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력</div>
+    <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>조회·편집</div>
+    <div class="tab" id="t6" onclick="goP('p6')" style="color:#60a5fa"><div class="tab-n" style="border-color:#60a5fa">3</div>TEST DB</div>
   </div>
   <div class="tb-r">
     <div style="display:flex;align-items:center;gap:5px">
@@ -497,6 +494,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
     </div>
     <button class="btn btn-ghost btn-sm" onclick="doExport()">⬇ 백업</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('imp').click()">⬆ 복원</button>
+    <button class="btn btn-teal btn-sm" onclick="exportForCowork()" title="코워크에서 읽을 수 있는 JSON 내보내기">📤 코워크 내보내기</button>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="doImport(event)">
   </div>
 </header>
@@ -509,7 +507,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
       <div class="cstab ca" data-c="all" onclick="setCat('all',this)">전체</div>
       <div class="cstab" data-c="test" onclick="setCat('test',this)">테스트</div>
       <div class="cstab" data-c="meet" onclick="setCat('meet',this)">협의</div>
-      <div class="cstab" data-c="prop" onclick="setCat('prop',this)">제안서</div>
     </div>
   </div>
   <div class="doc-list" id="doc-list"></div>
@@ -562,10 +559,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
         </div>
       </div>
       <div id="photo-preview-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
-    </div>
-    <!-- 제안서는 별도 -->
-    <div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:center">
-      제안서(PPTX)는 → <span style="color:var(--violet);cursor:pointer;text-decoration:underline" onclick="selectCat('prop')">직접 입력</span>
     </div>
   </div>
   <div id="form-area" style="display:none;flex:1;flex-direction:column;overflow:hidden">
@@ -726,8 +719,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
     <div class="tbar-title" id="p2-ttl">문서 검토</div>
     <button class="btn btn-ghost btn-sm" onclick="editDoc()">✏️ 편집</button>
     <button class="btn btn-rose btn-sm" onclick="delDoc()">🗑</button>
-    <button class="btn btn-teal btn-sm" onclick="goP('p3')">📊 PPT</button>
-    <button class="btn btn-violet btn-sm" onclick="goP('p4')">📓 노트뷰</button>
   </div>
   <div class="view-wrap">
     <div class="view-main" id="view-main"><div class="empty"><div class="ei">📂</div><div class="et">문서를 선택하세요</div><div class="es">좌측 목록에서 선택하거나 새 문서를 작성하세요</div><button class="btn btn-amber" onclick="newDoc()">+ 새 문서</button></div></div>
@@ -735,8 +726,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
       <div class="slbl-w">작업</div>
       <button class="btn btn-ghost" style="justify-content:center" onclick="editDoc()">✏️ 편집</button>
       <button class="btn btn-ghost" style="justify-content:center" onclick="reExtract()">🔄 재추출</button>
-      <button class="btn btn-teal" style="justify-content:center" onclick="goP('p3')">📊 PPT 생성</button>
-      <button class="btn btn-violet" style="justify-content:center" onclick="goP('p4')">📓 굿노트 뷰</button>
       <hr class="d">
       <div class="slbl-w">원본</div>
       <img id="p2-img" style="width:100%;border-radius:4px;border:1px solid var(--border);display:none">
@@ -745,140 +734,15 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
   </div>
 </div>
 
-<!-- ══ P3: PPT ══ -->
-<div class="panel" id="p3">
-  <div class="tbar">
-    <div class="tbar-title">③ PPT 슬라이드 생성</div>
-    <button class="btn btn-ghost btn-sm" onclick="goP('p2')">← 돌아가기</button>
-    <button class="btn btn-amber btn-sm" id="btn-gen" onclick="genPPT()">🤖 AI 생성</button>
-  </div>
-  <div class="p3-body">
-    <div class="p3-l">
-      <div id="p3-before">
-        <div class="slbl" style="margin-bottom:8px">PPT 스타일</div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <div class="sopt on" data-s="summary" onclick="pickS(this)"><div class="sopt-ttl">🎯 영업·보고 Summary</div><div class="sopt-desc">고객사 제출 · 원가절감 강조 · 5-6장</div></div>
-          <div class="sopt" data-s="technical" onclick="pickS(this)"><div class="sopt-ttl">⚙️ 기술 상세 Report</div><div class="sopt-desc">가공조건·수명 데이터 포함 · 8-10장</div></div>
-          <div class="sopt" data-s="proposal" onclick="pickS(this)"><div class="sopt-ttl">📋 제안서 Proposal</div><div class="sopt-desc">Before/After 구성 · RE-TOOLING · 6-8장</div></div>
-        </div>
-        <div class="slbl" style="margin:11px 0 7px">포함 문서</div>
-        <div class="docchk-list" id="p3-docs"></div>
-        <div class="slbl" style="margin:9px 0 5px">추가 지시</div>
-        <textarea id="p3-extra" style="min-height:48px" placeholder="예: 영문 병기, 경쟁사 비교 포함..."></textarea>
-      </div>
-      <div id="p3-after" style="display:none">
-        <div class="slbl" style="margin-bottom:8px">슬라이드 미리보기</div>
-        <div class="slides-grid" id="slides-grid" style="margin-bottom:9px"></div>
-        <div class="slbl" style="margin-bottom:5px">전체 구성안</div>
-        <div class="result-box" id="ppt-box"></div>
-        <div class="row" style="margin-top:8px">
-          <button class="btn btn-amber" onclick="dlResult()">⬇ 다운로드</button>
-          <button class="btn btn-ghost" onclick="cpResult()">📋 복사</button>
-          <button class="btn btn-ghost" onclick="resetPPT()">🔄 재생성</button>
-        </div>
-      </div>
-    </div>
-    <div class="p3-r">
-      <div class="slbl-w">진행 상황</div>
-      <ul class="gen-steps">
-        <li class="gs" id="gs1"><div class="gd"></div>문서 분석</li>
-        <li class="gs" id="gs2"><div class="gd"></div>슬라이드 구성</li>
-        <li class="gs" id="gs3"><div class="gd"></div>내용 작성</li>
-        <li class="gs" id="gs4"><div class="gd"></div>완료</li>
-      </ul>
-      <hr class="d">
-      <div class="slbl-w">선택 문서</div>
-      <div id="sel-info" style="font-size:10px;color:var(--text2);line-height:1.8"></div>
-    </div>
-  </div>
-</div>
+<!-- ══ P3: PPT (코워크로 이전) ══ -->
+<div class="panel" id="p3" style="display:none!important"></div>
 
-<!-- ══ P4: GOODNOTE ══ -->
-<div class="panel" id="p4">
-  <div class="tbar">
-    <div class="tbar-title">④ 굿노트 스타일 뷰어</div>
-    <div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="gn-status">문서를 선택하면 자동 렌더링됩니다</div>
-    <div style="flex:1"></div>
-    <button class="btn btn-ghost btn-sm" onclick="goP('p2')">← 검토로</button>
-    <button class="btn btn-ghost btn-sm" onclick="goP('p5')">📋 주간보고 →</button>
-  </div>
-  <div class="gn-vp" id="gn-vp">
-    <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:#907a60;font-size:13px">
-      <div style="font-size:36px;opacity:.3">📓</div><div>좌측에서 문서를 선택하세요</div>
-    </div>
-  </div>
-</div>
+<!-- ══ P4: GOODNOTE (미사용) ══ -->
+<div class="panel" id="p4" style="display:none!important"></div>
 
-<!-- ══ P5: WEEKLY ══ -->
-<div class="panel" id="p5">
-  <div class="tbar">
-    <div class="tbar-title">⑤ 주간 업무 보고서</div>
-    <button class="btn btn-ghost btn-sm" onclick="resetWeekly()">🔄 초기화</button>
-    <button class="btn btn-ghost btn-sm" id="btn-cp-w" disabled onclick="cpWeekly()">📋 복사</button>
-    <button class="btn btn-ghost btn-sm" id="btn-dl-w" disabled onclick="dlWeekly()">⬇ TXT</button>
-    <button class="btn btn-ghost btn-sm" id="btn-print-w" disabled onclick="printWeekly()">🖨 인쇄</button>
-    <button class="btn btn-amber btn-sm" onclick="genWeekly()">🤖 AI 생성</button>
-  </div>
-  <div class="p5-body">
-    <div class="p5-l">
-      <div><div class="p5-sec">기간 & 담당자</div>
-        <div class="g2" style="margin-top:7px">
-          <div class="fi"><label>시작일</label><input type="date" id="w-from"></div>
-          <div class="fi"><label>종료일</label><input type="date" id="w-to"></div>
-          <div class="fi"><label>담당자</label><input id="w-auth" placeholder="예: 전가흥"></div>
-          <div class="fi"><label>주차</label><input id="w-week" placeholder="예: 11-12주차"></div>
-        </div>
-      </div>
-      <div>
-        <div class="p5-sec">📄 일일업무일지 PDF 업로드</div>
-        <div style="font-size:9px;color:var(--text3);margin:4px 0 6px">TalkFile PDF를 업로드하면 AI가 직접 분석하여 주간보고를 생성합니다</div>
-        <div class="dz" id="w-pdf-dz" style="padding:14px;margin-bottom:6px" onclick="document.getElementById('w-pdf-input').click()">
-          <input type="file" id="w-pdf-input" accept=".pdf" multiple style="display:none" onchange="wHandlePDFs(event)">
-          <div class="dz-ico" style="font-size:18px">📄</div>
-          <div class="dz-ttl" style="font-size:11px">PDF 드래그 또는 클릭</div>
-          <div class="dz-sub" style="font-size:9px">일일업무일지 복수 선택 가능</div>
-        </div>
-        <div id="w-pdf-list" style="display:flex;flex-direction:column;gap:3px"></div>
-      </div>
-      <!-- 주간보고 docx 업로드 → 공구비/효과금액 추출 -->
-      <div>
-        <div class="p5-sec">📋 이전 주간보고 업로드 <span style="font-size:8px;color:var(--teal);font-family:'JetBrains Mono',monospace">선택사항</span></div>
-        <div style="font-size:9px;color:var(--text3);margin:4px 0 6px">이전 주간보고 docx를 올리면 공구비·효과금액 등을 자동 추출합니다</div>
-        <div class="dz" id="w-docx-dz" style="padding:10px;margin-bottom:4px;border-color:var(--teal);opacity:.7" onclick="document.getElementById('w-docx-input').click()">
-          <input type="file" id="w-docx-input" accept=".docx" style="display:none" onchange="wHandleDocx(event)">
-          <div class="dz-ico" style="font-size:14px">📝</div>
-          <div class="dz-ttl" style="font-size:10px">주간보고 .docx 업로드</div>
-        </div>
-        <div id="w-docx-status" style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace"></div>
-      </div>
-      <div><div class="p5-sec">앱 내 문서 선택</div>
-        <div style="font-size:9px;color:var(--text3);margin:4px 0 6px">앱에 저장된 현장기록 선택 (선택사항)</div>
-        <div class="w-dl" id="w-doclist"></div>
-      </div>
-      <div><div class="p5-sec">추가 활동</div>
-        <div id="extra-acts" style="display:flex;flex-direction:column;gap:4px;margin-top:5px">
-          <div class="act-row-w"><input placeholder="예: 내부 교육 이수..." style="font-size:11px"><button class="act-del" onclick="delAct(this)">×</button></div>
-        </div>
-        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:5px" onclick="addAct()">+ 활동 추가</button>
-      </div>
-      <div><div class="p5-sec">추가 지시</div>
-        <textarea id="w-extra" style="min-height:48px;margin-top:6px" placeholder="예: 다음 주 예정 포함..."></textarea>
-      </div>
-    </div>
-    <div class="p5-r">
-      <div class="p5-bar">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--text2)">📋 굿노트 스타일 보고서</div>
-        <div style="flex:1"></div>
-        <div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="w-status">문서 선택 후 AI 생성</div>
-      </div>
-      <div class="w5-vp" id="w5-vp">
-        <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:10px;color:#907a60;font-size:13px">
-          <div style="font-size:36px;opacity:.3">📓</div><div>설정 후 AI 생성을 눌러주세요</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- ══ P5: WEEKLY (코워크로 이전) ══ -->
+<div class="panel" id="p5" style="display:none!important"></div>
+
 
 <!-- ══ P6: TEST REPORT DB ══ -->
 <div class="panel" id="p6">
@@ -1061,13 +925,16 @@ function dl(ms){return new Promise(r=>setTimeout(r,ms));}
 
 // ── PANELS ──
 function goP(id){
-  ['p1','p2','p3','p4','p5','p6'].forEach((p,i)=>{
-    document.getElementById(p).classList.toggle('on',p===id);
-    document.getElementById('t'+(i+1)).classList.toggle('on',p===id);
+  // 활성 탭 매핑: p1→t1, p2→t2, p6→t6
+  const tabMap={p1:'t1',p2:'t2',p6:'t6'};
+  ['p1','p2','p3','p4','p5','p6'].forEach(p=>{
+    const panel=document.getElementById(p);
+    if(panel)panel.classList.toggle('on',p===id);
   });
-  if(id==='p3'){populateP3();updSel();}
-  if(id==='p4'&&cid){renderGN([docs.find(d=>d.id===cid)].filter(Boolean));}
-  if(id==='p5'){populateWDocs();}
+  // 탭 활성화
+  ['t1','t2','t6'].forEach(t=>{ const el=document.getElementById(t);if(el)el.classList.remove('on');});
+  const activeTab=tabMap[id];
+  if(activeTab){const el=document.getElementById(activeTab);if(el)el.classList.add('on');}
   if(id==='p6'){dbFilter();}
 }
 
@@ -1441,27 +1308,20 @@ function selectCat(cat){
   document.getElementById('verify-panel').style.display='none';
   document.getElementById('manual-form').style.display='flex';
   document.getElementById('manual-form').style.flexDirection='column';
-  ['f-title','f-cust','f-author','f-extracted','f-summary','m-machine','m-spindle','m-part','m-mat','m-ind','m-proc','cl-att','cl-ag','cl-res','cl-act','pr-tool','pr-effect','f-prop-ext','c-old','c-new','c-cpp','c-save'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  ['f-title','f-cust','f-author','f-extracted','f-summary','m-machine','m-spindle','m-part','m-mat','m-ind','m-proc','cl-att','cl-ag','cl-res','cl-act','c-old','c-new','c-cpp','c-save'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('f-date').value=tod();
   document.getElementById('prev').style.display='none';
-  document.getElementById('pptx-preview').style.display='none';
   clearCT();
   document.getElementById('test-fields').style.display=cat==='test'?'':'none';
   document.getElementById('meet-fields').style.display=cat==='meet'?'':'none';
-  document.getElementById('prop-fields').style.display=cat==='prop'?'':'none';
+  document.getElementById('prop-fields').style.display='none';
   document.getElementById('ct-area').style.display=cat==='test'?'':'none';
-  document.getElementById('ai-area').style.display=cat!=='prop'?'':'none';
-  document.getElementById('prop-ai-area').style.display=cat==='prop'?'':'none';
+  document.getElementById('ai-area').style.display='';
+  document.getElementById('prop-ai-area').style.display='none';
   document.querySelectorAll('[id^="rs-"]').forEach(e=>e.className='stat-btn');
   const okEl=document.getElementById('rs-ok');if(okEl)okEl.className='stat-btn on-ok';
-  document.querySelectorAll('[id^="ps-"]').forEach(e=>e.className='stat-btn');
-  const psEl=document.getElementById('ps-applied');if(psEl)psEl.className='stat-btn on-applied';
-  document.querySelectorAll('[data-pt]').forEach(e=>e.className='pt-btn');
-  const ptEl=document.querySelector('[data-pt="tooling"]');if(ptEl)ptEl.className='pt-btn on';
-  const titles={test:'① 테스트 레포트 직접 입력',meet:'① 협의 기록 직접 입력',prop:'① 제안서 입력'};
+  const titles={test:'① 테스트 레포트 입력',meet:'① 협의 기록 입력'};
   document.getElementById('p1-title').textContent=titles[cat]||'① 신규 입력';
-  if(cat==='prop'){document.getElementById('dz-ico').textContent='📊';document.getElementById('dz-ttl').textContent='제안서 파일 선택';document.getElementById('dz-sub').textContent='PPTX 또는 이미지를 업로드하세요';document.getElementById('dz-types').innerHTML='<span class="dz-type-chip">PPTX</span><span class="dz-type-chip">JPG</span><span class="dz-type-chip">PNG</span>';document.getElementById('fi').accept='image/*,.pptx';}
-  else{document.getElementById('dz-ico').textContent='📸';document.getElementById('dz-ttl').textContent='굿노트 캡처 이미지';document.getElementById('dz-sub').textContent='클릭 또는 드래그 앤 드롭';document.getElementById('dz-types').innerHTML='<span class="dz-type-chip">JPG</span><span class="dz-type-chip">PNG</span>';document.getElementById('fi').accept='image/*';}
   document.getElementById('btn-save').disabled=true;
   renderSB();goP('p1');
 }
@@ -3261,7 +3121,43 @@ function printWeekly(){
   setTimeout(()=>w.print(),500);
 }
 function doExport(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(docs,null,2)],{type:'application/json'}));a.download=`iscar-rs4-${tod()}.json`;a.click();toast('백업 완료','ok');}
-function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!Array.isArray(imp))throw 0;if(!confirm(`${imp.length}개 가져옵니까?`))return;imp.forEach(d=>{if(!docs.find(x=>x.id===d.id))docs.push(d);});sv();renderSB();populateP3();populateWDocs();toast(`${imp.length}개 복원`,'ok');}catch{toast('복원 실패','err');}};r.readAsText(f);e.target.value='';}
+function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!Array.isArray(imp))throw 0;if(!confirm(`${imp.length}개 가져옵니까?`))return;imp.forEach(d=>{if(!docs.find(x=>x.id===d.id))docs.push(d);});sv();renderSB();toast(`${imp.length}개 복원`,'ok');}catch{toast('복원 실패','err');}};r.readAsText(f);e.target.value='';}
+
+// 코워크용 JSON 내보내기 — 코워크가 읽기 좋은 구조로 정리
+function exportForCowork(){
+  const coworkData={
+    exportedAt: new Date().toISOString(),
+    totalCount: docs.length,
+    // 일일업무일지 (test/meet)
+    dailyReports: docs.filter(d=>d.cat==='test'||d.cat==='meet').map(d=>({
+      id: d.id,
+      date: d.date,
+      type: d.cat==='test'?'테스트':'협의',
+      customer: d.customer||'',
+      author: d.author||'',
+      title: d.title||'',
+      part: d.part||'',
+      material: d.material||'',
+      machine: d.machine||'',
+      process: d.process||'',
+      result: d.result||'',
+      summary: d.summary||'',
+      // CT 절삭조건
+      ctData: d.ctData||null,
+      // 협의 전용
+      attendees: d.attendees||'',
+      agenda: d.agenda||'',
+      meetResult: d.meetResult||'',
+      nextAction: d.nextAction||'',
+      updatedAt: d.updatedAt||''
+    }))
+  };
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(coworkData,null,2)],{type:'application/json'}));
+  a.download=`ISCAR_데이터_${tod()}.json`;
+  a.click();
+  toast(`코워크용 JSON 내보내기 완료 — ${coworkData.dailyReports.length}개`,'ok');
+}
 function toast(msg,type='info'){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);}
 function getApiKey(){return localStorage.getItem('iscar-api-key')||'';}
 function saveGHToken(v){
