@@ -503,11 +503,6 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 <aside class="sb">
   <div class="sb-top">
     <input class="sb-search" placeholder="🔍  검색..." oninput="renderSB(this.value)">
-    <div class="cat-strip">
-      <div class="cstab ca" data-c="all" onclick="setCat('all',this)">전체</div>
-      <div class="cstab" data-c="test" onclick="setCat('test',this)">테스트</div>
-      <div class="cstab" data-c="meet" onclick="setCat('meet',this)">협의</div>
-    </div>
   </div>
   <div class="doc-list" id="doc-list"></div>
   <div class="sb-foot">
@@ -1286,16 +1281,18 @@ function dbSendToWeekly(id){
 }
 
 // ════════════════ ORIGINAL FUNCTIONS (unchanged) ════════════════
-function setCat(c,el){curCat=c;document.querySelectorAll('.cstab').forEach(t=>t.className='cstab');const cls={all:'ca',test:'ct',meet:'cm',prop:'cp'}[c]||'ca';el.className='cstab '+cls;renderSB();}
 function renderSB(q=''){
   const el=document.getElementById('doc-list');
-  let list=curCat==='all'?docs:docs.filter(d=>d.cat===curCat);
-  if(q)list=list.filter(d=>(d.title||'').toLowerCase().includes(q.toLowerCase()));
+  let list=docs.filter(d=>d.cat==='test'||d.cat==='meet');
+  if(q){
+    const lq=q.toLowerCase();
+    list=list.filter(d=>(d.title||'').toLowerCase().includes(lq)||(d.customer||'').toLowerCase().includes(lq)||(d.date||'').includes(q));
+  }
   if(!list.length){el.innerHTML=`<div style="padding:14px 6px;text-align:center;font-size:10px;color:var(--text3)"><div style="font-size:20px;margin-bottom:4px">📂</div>문서 없음</div>`;return;}
   el.innerHTML=[...list].reverse().map(d=>{
     const col=CAT_COL[d.cat]||'var(--border)';
-    const sb=d.cat==='prop'?`<span class="bx ${PS_CLS[d.propStatus]||'bx-wip'}">${{applied:'✅',pending:'🔄',closed:'❌'}[d.propStatus]||'?'}</span>`:`<span class="bx ${RES_CLS[d.result]||'bx-wip'}">${d.result?.toUpperCase()||'WIP'}</span>`;
-    const pb=d.cat==='prop'?`<span class="bx bx-prop">${PT_LBL[d.propType]||''}</span>`:`<span class="bx bx-${d.cat}">${CAT_LBL[d.cat]||''}</span>`;
+    const sb=`<span class="bx ${RES_CLS[d.result]||'bx-wip'}">${d.result?.toUpperCase()||'WIP'}</span>`;
+    const pb=`<span class="bx bx-${d.cat}">${CAT_LBL[d.cat]||''}</span>`;
     return `<div class="ditem${d.id===cid?' sel':''}" onclick="selDoc('${d.id}')"><div class="dbar" style="background:${col}"></div><div class="dttl">${d.title||'(제목 없음)'}</div><div class="dmeta"><span>${d.date||'--'}</span>${pb}${sb}</div></div>`;
   }).join('');
 }
