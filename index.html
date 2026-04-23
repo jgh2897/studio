@@ -480,7 +480,7 @@ hr.d{border:none;border-top:1px solid var(--border);margin:7px 0}
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.0.9</div></div>
+  <div class="brand">⚙ ISCAR <div class="brand-tag">REPORT STUDIO</div><div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.08em;margin-left:4px">v1.1.0</div></div>
   <div class="tabs">
     <div class="tab on" id="t1" onclick="goP('p1')"><div class="tab-n">1</div>신규 입력</div>
     <div class="tab" id="t2" onclick="goP('p2')"><div class="tab-n">2</div>조회·편집</div>
@@ -914,7 +914,32 @@ let dbFiltered = [];
 })();
 
 function tod(){return new Date().toISOString().split('T')[0];}
-function sv(){localStorage.setItem('iscar-rs4',JSON.stringify(docs));}
+function sv(){
+  localStorage.setItem('iscar-rs4',JSON.stringify(docs));
+  // GitHub 자동 저장 (백그라운드)
+  if(getGHToken()) svToGH().catch(e=>console.log('GitHub 자동저장 실패:',e));
+}
+
+async function svToGH(){
+  try{
+    let sha='';
+    const getRes=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/reports.json',
+      {headers:{'Authorization':'token '+getGHToken(),'Accept':'application/vnd.github.v3+json'}});
+    if(getRes.ok){const d=await getRes.json();sha=d.sha;}
+    // 이미지 제외하고 저장 (용량 절감)
+    const saveData=docs.map(d=>{const {image,photos,...rest}=d;return rest;});
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(saveData,null,2))));
+    const body={message:`Update daily reports ${new Date().toISOString().slice(0,10)}`,content};
+    if(sha)body.sha=sha;
+    const res=await fetch('https://api.github.com/repos/'+GH_REPO+'/contents/reports.json',
+      {method:'PUT',headers:{'Authorization':'token '+getGHToken(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.ok){
+      toast('☁️ GitHub 자동 저장 완료','ok');
+    }
+  }catch(e){
+    console.log('GitHub 저장 실패:',e);
+  }
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 function dl(ms){return new Promise(r=>setTimeout(r,ms));}
 
